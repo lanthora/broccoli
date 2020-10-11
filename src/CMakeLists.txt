@@ -4,6 +4,7 @@ cmake_minimum_required (VERSION 3.18.4)
 project(idle)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+set(CMAKE_EXE_LINKER_FLAGS "-static")
 
 aux_source_directory(. DIR_SRCS)
 
