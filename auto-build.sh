@@ -1,5 +1,5 @@
 #!/bin/bash
-PROJECT_DIR=$(dirname $0)
+PROJECT_DIR=`cd $(dirname $0);pwd`
 BUILD_DIR="${PROJECT_DIR}/build"
 
 cd "$PROJECT_DIR"
