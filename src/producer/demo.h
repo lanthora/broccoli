@@ -1,5 +1,5 @@
-#ifndef PRODUCER_DEBUG_H
-#define PRODUCER_DEBUG_H
+#ifndef PRODUCER_DEMO_H
+#define PRODUCER_DEMO_H
 
 class demo_producer {
 public:
