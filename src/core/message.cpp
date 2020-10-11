@@ -28,6 +28,7 @@ msg_buff &msg_buff::operator=(const msg_buff &other) {
   if (this->size == 0) {
     this->info = nullptr;
   } else {
+    delete[] this->info;
     this->info = new char[other.size];
     std::memcpy(this->info, other.info, this->size);
   }

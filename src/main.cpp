@@ -1,22 +1,19 @@
-#include "consumer/consumer.h"
-#include "core/type.h"
-#include "handler/debug.h"
-#include "handler/demo.h"
-#include "producer/demo.h"
-
+#include "core/consumer.h"
+#include "core/producer.h"
+#include "demo/demo.h"
 #include <thread>
 
 int main() {
 
-  demo_producer p;
-  std::thread demo_producer_thread(p);
+  producer p;
+  p.add_service(demo_service);
+  std::thread p_thread(p);
+  p_thread.join();
 
   consumer c;
   c.add_handler(MSG_TYPE_DEMO, demo_handler);
-  std::thread consumer_thread(c);
-
-  consumer_thread.join();
-  demo_producer_thread.join();
+  std::thread c_thread(c);
+  c_thread.join();
 
   return 0;
 }

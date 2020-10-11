@@ -1,5 +1,4 @@
-#include "consumer/consumer.h"
-
+#include "core/consumer.h"
 #include <chrono>
 #include <cstdlib>
 #include <ctime>
@@ -18,7 +17,6 @@ void consumer::operator()() {
       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
       continue;
     }
-    debug_handler(item.buff);
     for (handler_type handler : handlers_map[item.type]) {
       handler(item.buff);
     }
