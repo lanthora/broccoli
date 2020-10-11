@@ -24,6 +24,9 @@ msg_buff::msg_buff(msg_buff &&other) : size(other.size) {
 }
 
 msg_buff &msg_buff::operator=(const msg_buff &other) {
+  if (this->info == other.info) {
+    return *this;
+  }
   this->size = other.size;
   if (this->size == 0) {
     this->info = nullptr;
