@@ -5,9 +5,7 @@
 #include <iostream>
 #include <thread>
 
-void consumer::add_handler(msg_type _type, handler_type _handler) {
-  handlers_map[_type].push_back(_handler);
-}
+void consumer::add_handler(msg_type _type, handler_type _handler) { handlers_map[_type].push_back(_handler); }
 
 void consumer::operator()() {
   msg_item item;

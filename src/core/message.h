@@ -27,8 +27,7 @@ struct msg_item {
   unsigned int priority;
   msg_buff buff;
 
-  msg_item(std::string type = "", unsigned int priority = 0,
-           msg_buff buff = NULL_MSG_BUFF)
+  msg_item(std::string type = "", unsigned int priority = 0, msg_buff buff = NULL_MSG_BUFF)
       : type(type), priority(priority), buff(buff) {}
 
   inline bool empty() { return this->type.empty(); }
@@ -37,16 +36,13 @@ struct msg_item {
 static const msg_item NULL_MSG_ITEM;
 
 template <> struct std::greater<msg_item> {
-  bool operator()(const msg_item &left, const msg_item &right) {
-    return left.priority < right.priority;
-  }
+  bool operator()(const msg_item &left, const msg_item &right) { return left.priority < right.priority; }
 };
 
 class msg_queue {
 
 private:
-  std::priority_queue<msg_item, std::vector<msg_item>, std::greater<msg_item>>
-      internal_msg_queue;
+  std::priority_queue<msg_item, std::vector<msg_item>, std::greater<msg_item>> internal_msg_queue;
   std::mutex internal_msg_queue_mutex;
 
 public:
