@@ -11,6 +11,7 @@ void demo_handler(const msg_buff &buff) {
   std::memcpy(info, buff.info, buff.size);
   info[buff.size] = 0;
   std::cout << "demo handler: " << info << std::endl;
+  delete[] info;
 }
 
 void demo_service() {

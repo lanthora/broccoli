@@ -27,11 +27,12 @@ msg_buff &msg_buff::operator=(const msg_buff &other) {
   if (this->info == other.info) {
     return *this;
   }
-  this->size = other.size;
-  if (this->size == 0) {
-    this->info = nullptr;
-  } else {
+  if (this->size) {
     delete[] this->info;
+    this->info = nullptr;
+  }
+  this->size = other.size;
+  if (this->size) {
     this->info = new char[other.size];
     std::memcpy(this->info, other.info, this->size);
   }
@@ -39,6 +40,14 @@ msg_buff &msg_buff::operator=(const msg_buff &other) {
 }
 
 msg_buff &msg_buff::operator=(msg_buff &&other) {
+  if (this->info == other.info) {
+    other.info = nullptr;
+    return *this;
+  }
+  if (this->size) {
+    delete[] this->info;
+  }
+
   this->size = other.size;
   this->info = other.info;
   other.info = nullptr;
@@ -46,7 +55,7 @@ msg_buff &msg_buff::operator=(msg_buff &&other) {
 }
 
 msg_buff::~msg_buff() {
-  delete[](this->info);
+  delete[] this->info;
   this->info = nullptr;
 }
 
