@@ -6,8 +6,10 @@
 #include <list>
 #include <map>
 
+namespace broccoli {
+
 class consumer {
-  typedef void (*handler_type)(const msg_buff &buff);
+  typedef void (*handler_type)(const buff_t &buff);
   typedef std::string msg_type;
 
 private:
@@ -17,5 +19,7 @@ public:
   void add_handler(msg_type _type, handler_type _handler);
   void operator()();
 };
+
+} // namespace broccoli
 
 #endif

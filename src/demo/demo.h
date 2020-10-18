@@ -3,9 +3,13 @@
 
 #include "core/message.h"
 
+namespace broccoli {
+
 const std::string MSG_TYPE_DEMO = "demo";
 
-void demo_handler(const msg_buff &buff);
+void demo_handler(const buff_t &buff);
 void demo_service();
+
+} // namespace broccoli
 
 #endif

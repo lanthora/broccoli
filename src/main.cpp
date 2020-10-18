@@ -5,13 +5,13 @@
 
 int main() {
 
-  producer p;
-  p.add_service(demo_service);
+  broccoli::producer p;
+  p.add_service(broccoli::demo_service);
   std::thread p_thread(p);
   p_thread.join();
 
-  consumer c;
-  c.add_handler(MSG_TYPE_DEMO, demo_handler);
+  broccoli::consumer c;
+  c.add_handler(broccoli::MSG_TYPE_DEMO, broccoli::demo_handler);
   std::thread c_thread(c);
   c_thread.join();
 

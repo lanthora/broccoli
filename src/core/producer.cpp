@@ -2,6 +2,8 @@
 #include <iostream>
 #include <thread>
 
+namespace broccoli {
+
 void producer::add_service(service_type _service) { this->service_list.push_back(_service); }
 
 void producer::operator()() {
@@ -9,3 +11,5 @@ void producer::operator()() {
     std::thread(_service).detach();
   }
 }
+
+} // namespace broccoli

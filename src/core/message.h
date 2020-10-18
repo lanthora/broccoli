@@ -2,61 +2,84 @@
 #define CORE_MESSAGE_H
 
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <string>
 
-struct msg_buff {
-  size_t size;
-  char *info;
+namespace broccoli {
 
-  msg_buff(size_t size, const char *info);
-  msg_buff(const msg_buff &other);
-  msg_buff(msg_buff &&other);
-  msg_buff &operator=(const msg_buff &other);
-  msg_buff &operator=(msg_buff &&other);
-  ~msg_buff();
+struct buff_t {
+  typedef std::unique_ptr<unsigned char[]> bytes_t;
+  size_t size = 0;
+  bytes_t bytes = nullptr;
+  buff_t() {}
+
+  buff_t(buff_t &&other) {
+    size = std::move(other.size);
+    bytes = std::move(other.bytes);
+  }
+
+  buff_t &operator=(buff_t &&other) {
+    size = std::move(other.size);
+    bytes = std::move(other.bytes);
+    return *this;
+  }
+
+  friend std::ostream &operator<<(std::ostream &_os, const buff_t &_buff);
+  friend void *buff_memcpy(bytes_t &__dest, const unsigned char *__src, size_t __n);
+  friend void *buff_memcpy(unsigned char *__dest, const bytes_t &__src, size_t __n);
 };
 
-static const msg_buff NULL_MSG_BUFF(0, nullptr);
+std::ostream &operator<<(std::ostream &_os, const buff_t &_buff);
+void *buff_memcpy(buff_t::bytes_t &__dest, const unsigned char *__src, size_t __n);
+void *buff_memcpy(unsigned char *__dest, const buff_t::bytes_t &__src, size_t __n);
 
-struct msg_item {
+struct item_t {
+  typedef std::shared_ptr<item_t> item_ptr;
+
   std::string type;
-  unsigned int priority;
-  msg_buff buff;
+  unsigned int priority = 0;
+  buff_t buff;
 
-  msg_item(std::string type = "", unsigned int priority = 0, msg_buff buff = NULL_MSG_BUFF)
-      : type(type), priority(priority), buff(buff) {}
-
-  inline bool empty() { return this->type.empty(); }
+  friend std::ostream &operator<<(std::ostream &_os, const item_t &_item);
 };
 
-static const msg_item NULL_MSG_ITEM;
+std::ostream &operator<<(std::ostream &_os, const item_t &_item);
 
-template <> struct std::greater<msg_item> {
-  bool operator()(const msg_item &left, const msg_item &right) { return left.priority < right.priority; }
+extern item_t::item_ptr NULL_MSG_ITEM;
+
+struct item_greater {
+  bool operator()(const item_t::item_ptr &left, const item_t::item_ptr &right) {
+    return left->priority < right->priority;
+  }
 };
 
-class msg_queue {
+class queue_singleton {
+  typedef item_t::item_ptr element_t;
+  typedef std::vector<element_t> container_t;
+  typedef item_greater compare;
 
 private:
-  std::priority_queue<msg_item, std::vector<msg_item>, std::greater<msg_item>> internal_msg_queue;
-  std::mutex internal_msg_queue_mutex;
+  std::priority_queue<element_t, container_t, compare> _queue;
+  std::mutex queue_mutex;
 
 public:
-  void put(const msg_item &item);
-  msg_item get();
+  void put(const element_t &item);
+  element_t get();
 
 private:
-  msg_queue() {}
+  queue_singleton() {}
 
 public:
-  static inline msg_queue &get_instance() {
-    static msg_queue instance;
+  static inline queue_singleton &get_instance() {
+    static queue_singleton instance;
     return instance;
   }
 };
+
+}; // namespace broccoli
 
 #endif

@@ -7,6 +7,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 # 静态链接
 set(CMAKE_EXE_LINKER_FLAGS "-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
 
+SET(CMAKE_BUILD_TYPE "Debug")
+SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
+
 aux_source_directory(. DIR_SRCS)
 
 add_subdirectory(core)

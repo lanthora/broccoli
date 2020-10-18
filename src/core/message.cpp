@@ -1,77 +1,61 @@
 #include "core/message.h"
 
-msg_buff::msg_buff(size_t size, const char *info) : size(size) {
-  if (this->size == 0) {
-    this->info = nullptr;
-  } else {
-    this->info = new char[size];
-    std::memcpy(this->info, info, this->size);
+namespace broccoli {
+
+std::ostream &operator<<(std::ostream &_os, const buff_t &_buff) {
+  std::cout << "=============================================== ";
+  std::cout << std::dec << _buff.size << std::endl;
+  for (size_t i = 0; i < _buff.size; ++i) {
+    std::cout << std::hex << std::setw(2) << std::setfill('0');
+    std::cout << std::setiosflags(std::ios::uppercase);
+    std::cout << (unsigned int)(_buff.bytes)[i] << " ";
+    if (i % 16 == 15) {
+      std::cout << std::endl;
+    }
   }
+  std::cout << std::endl;
+  return _os;
 }
 
-msg_buff::msg_buff(const msg_buff &other) : size(other.size) {
-  if (this->size == 0) {
-    this->info = nullptr;
-  } else {
-    this->info = new char[other.size];
-    std::memcpy(this->info, other.info, this->size);
+void *buff_memcpy(buff_t::bytes_t &__dest, const unsigned char *__src, size_t __n) {
+  for (size_t i = 0; i < __n; ++i) {
+    __dest[i] = __src[i];
   }
+  return 0;
 }
 
-msg_buff::msg_buff(msg_buff &&other) : size(other.size) {
-  this->info = other.info;
-  other.info = nullptr;
+void *buff_memcpy(unsigned char *__dest, const buff_t::bytes_t &__src, size_t __n) {
+  for (size_t i = 0; i < __n; ++i) {
+    __dest[i] = __src[i];
+  }
+  return 0;
 }
 
-msg_buff &msg_buff::operator=(const msg_buff &other) {
-  if (this->info == other.info) {
-    return *this;
-  }
-  if (this->size) {
-    delete[] this->info;
-    this->info = nullptr;
-  }
-  this->size = other.size;
-  if (this->size) {
-    this->info = new char[other.size];
-    std::memcpy(this->info, other.info, this->size);
-  }
-  return *this;
+std::ostream &operator<<(std::ostream &_os, const item_t &_item) {
+  std::cout << "type: " << _item.type << std::endl;
+  std::cout << "priority: " << _item.priority << std::endl;
+  std::cout << _item.buff << std::endl;
+  return _os;
 }
 
-msg_buff &msg_buff::operator=(msg_buff &&other) {
-  if (this->info == other.info) {
-    other.info = nullptr;
-    return *this;
-  }
-  if (this->size) {
-    delete[] this->info;
-  }
+item_t::item_ptr NULL_MSG_ITEM;
 
-  this->size = other.size;
-  this->info = other.info;
-  other.info = nullptr;
-  return *this;
+void queue_singleton::put(const element_t &item) {
+  queue_mutex.lock();
+  _queue.push(item);
+  queue_mutex.unlock();
 }
 
-msg_buff::~msg_buff() {
-  delete[] this->info;
-  this->info = nullptr;
-}
-
-void msg_queue::put(const msg_item &item) {
-  internal_msg_queue_mutex.lock();
-  internal_msg_queue.push(item);
-  internal_msg_queue_mutex.unlock();
-}
-
-msg_item msg_queue::get() {
-  internal_msg_queue_mutex.lock();
-  msg_item tmp_item = NULL_MSG_ITEM;
-  if (!internal_msg_queue.empty()) {
-    tmp_item = internal_msg_queue.top();
-    internal_msg_queue.pop();
+queue_singleton::element_t queue_singleton::get() {
+  queue_mutex.lock();
+  element_t tmp_item = NULL_MSG_ITEM;
+  if (!_queue.empty()) {
+    tmp_item = _queue.top();
+    _queue.pop();
   }
-  internal_msg_queue_mutex.unlock();
+  queue_mutex.unlock();
+
   return tmp_item;
 }
+
+} // namespace broccoli

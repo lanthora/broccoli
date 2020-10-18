@@ -3,6 +3,8 @@
 
 #include <list>
 
+namespace broccoli {
+
 class producer {
   typedef void (*service_type)();
 
@@ -13,5 +15,7 @@ public:
   void add_service(service_type _service);
   void operator()();
 };
+
+} // namespace broccoli
 
 #endif
