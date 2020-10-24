@@ -72,6 +72,20 @@
     "forward_list": "cpp",
     "unordered_set": "cpp",
     "iomanip": "cpp",
-    "typeindex": "cpp"
-  }
+    "typeindex": "cpp",
+    "executor": "cpp",
+    "io_context": "cpp",
+    "socket": "cpp",
+    "timer": "cpp",
+    "future": "cpp",
+    "*.inc": "cpp",
+    "buffer": "cpp",
+    "internet": "cpp",
+    "core": "cpp",
+    "codecvt": "cpp",
+    "netfwd": "cpp",
+    "regex": "cpp",
+    "shared_mutex": "cpp"
+  },
+  "typescript.workspaceSymbols.scope": "currentProject"
 }

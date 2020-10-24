@@ -11,71 +11,66 @@
 
 namespace broccoli {
 
-struct buff_t {
-  typedef std::unique_ptr<unsigned char[]> bytes_t;
-  size_t size = 0;
-  bytes_t bytes = nullptr;
-  buff_t() {}
+struct Buffer {
+  typedef std::unique_ptr<unsigned char[]> Bytes;
+  typedef size_t Size;
+  Size size = 0;
+  Bytes bytes = nullptr;
+  Buffer() {}
 
-  buff_t(buff_t &&other) {
-    size = std::move(other.size);
-    bytes = std::move(other.bytes);
+  Buffer(Buffer &&other) {
+    this->size = std::move(other.size);
+    this->bytes = std::move(other.bytes);
   }
 
-  buff_t &operator=(buff_t &&other) {
-    size = std::move(other.size);
-    bytes = std::move(other.bytes);
+  Buffer &operator=(Buffer &&other) {
+    this->size = std::move(other.size);
+    this->bytes = std::move(other.bytes);
     return *this;
   }
-
-  friend std::ostream &operator<<(std::ostream &_os, const buff_t &_buff);
-  friend void *buff_memcpy(bytes_t &__dest, const unsigned char *__src, size_t __n);
-  friend void *buff_memcpy(unsigned char *__dest, const bytes_t &__src, size_t __n);
 };
 
-std::ostream &operator<<(std::ostream &_os, const buff_t &_buff);
-void *buff_memcpy(buff_t::bytes_t &__dest, const unsigned char *__src, size_t __n);
-void *buff_memcpy(unsigned char *__dest, const buff_t::bytes_t &__src, size_t __n);
+std::ostream &operator<<(std::ostream &os, const Buffer &buff);
+void *BufferCopy(Buffer::Bytes &__dest, const unsigned char *__src, size_t __n);
+void *BufferCopy(unsigned char *__dest, const Buffer::Bytes &__src, size_t __n);
 
-struct item_t {
-  typedef std::shared_ptr<item_t> item_ptr;
+struct BufferItem {
+  typedef std::shared_ptr<BufferItem> Ptr;
 
   std::string type;
   unsigned int priority = 0;
-  buff_t buff;
-
-  friend std::ostream &operator<<(std::ostream &_os, const item_t &_item);
+  Buffer buff;
 };
 
-std::ostream &operator<<(std::ostream &_os, const item_t &_item);
+std::ostream &operator<<(std::ostream &os, const BufferItem &item);
 
-extern item_t::item_ptr NULL_MSG_ITEM;
+extern BufferItem::Ptr NULL_MSG_ITEM;
 
-struct item_greater {
-  bool operator()(const item_t::item_ptr &left, const item_t::item_ptr &right) {
+struct BufferItemGreater {
+  bool operator()(const BufferItem::Ptr &left, const BufferItem::Ptr &right) {
     return left->priority < right->priority;
   }
 };
 
-class queue_singleton {
-  typedef item_t::item_ptr element_t;
-  typedef std::vector<element_t> container_t;
-  typedef item_greater compare;
+class BufferItemQueue {
+  typedef BufferItem::Ptr Element;
+  typedef std::vector<Element> ElementContainer;
+  typedef BufferItemGreater ElementCompare;
 
 private:
-  std::priority_queue<element_t, container_t, compare> _queue;
+  std::priority_queue<Element, ElementContainer, ElementCompare> buffer_item_queue;
   std::mutex queue_mutex;
 
 public:
-  void put(const element_t &item);
-  element_t get();
+  void Put(const Element &item);
+  BufferItem::Ptr Get();
 
 private:
-  queue_singleton() {}
+  BufferItemQueue() {}
 
 public:
-  static inline queue_singleton &get_instance() {
-    static queue_singleton instance;
+  static inline BufferItemQueue &GetInstance() {
+    static BufferItemQueue instance;
     return instance;
   }
 };

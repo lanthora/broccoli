@@ -5,15 +5,24 @@
 
 namespace broccoli {
 
-class producer {
-  typedef void (*service_type)();
+class Producer {
+  typedef void (*Service)();
 
 private:
-  std::list<service_type> service_list;
+  std::list<Service> service_list;
 
 public:
-  void add_service(service_type _service);
+  void AddService(Service service);
   void operator()();
+
+private:
+  Producer() {}
+
+public:
+  static inline Producer &GetInstance() {
+    static Producer instance;
+    return instance;
+  }
 };
 
 } // namespace broccoli

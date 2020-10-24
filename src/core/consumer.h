@@ -8,16 +8,25 @@
 
 namespace broccoli {
 
-class consumer {
-  typedef void (*handler_type)(const buff_t &buff);
-  typedef std::string msg_type;
+class Consumer {
+  typedef void (*Handler)(const Buffer &buff);
+  typedef std::string MessageType;
 
 private:
-  std::map<msg_type, std::list<handler_type>> handlers_map;
+  std::map<MessageType, std::list<Handler>> handlers_map;
 
 public:
-  void add_handler(msg_type _type, handler_type _handler);
+  void AddHandler(MessageType type, Handler handler);
   void operator()();
+
+private:
+  Consumer() {}
+
+public:
+  static inline Consumer &GetInstance() {
+    static Consumer instance;
+    return instance;
+  }
 };
 
 } // namespace broccoli

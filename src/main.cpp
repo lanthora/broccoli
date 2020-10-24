@@ -1,19 +1,22 @@
-#include "core/consumer.h"
-#include "core/producer.h"
 #include "demo/demo.h"
-#include <thread>
+#include "locale/domain.h"
+#include "remote/remote.h"
+#include "util/config.h"
 
-int main() {
 
-  broccoli::producer p;
-  p.add_service(broccoli::demo_service);
-  std::thread p_thread(p);
-  p_thread.join();
+using namespace broccoli;
 
-  broccoli::consumer c;
-  c.add_handler(broccoli::MSG_TYPE_DEMO, broccoli::demo_handler);
-  std::thread c_thread(c);
-  c_thread.join();
-
-  return 0;
+int main(int argc, char **argv) {
+  Config::GetInstance().Init(argc, argv);
+  switch (Config::GetInstance().GetRunType()) {
+  case Config::RUN_TYPE::SERVER:
+    StartServer();
+    break;
+  case Config::RUN_TYPE::CLIENT:
+    StartClient();
+    break;
+  default:
+    StartDemo();
+    break;
+  }
 }

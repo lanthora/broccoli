@@ -2,7 +2,7 @@
 
 namespace broccoli {
 
-std::ostream &operator<<(std::ostream &_os, const buff_t &_buff) {
+std::ostream &operator<<(std::ostream &_os, const Buffer &_buff) {
   std::cout << "=============================================== ";
   std::cout << std::dec << _buff.size << std::endl;
   for (size_t i = 0; i < _buff.size; ++i) {
@@ -17,41 +17,41 @@ std::ostream &operator<<(std::ostream &_os, const buff_t &_buff) {
   return _os;
 }
 
-void *buff_memcpy(buff_t::bytes_t &__dest, const unsigned char *__src, size_t __n) {
+void *BufferCopy(Buffer::Bytes &__dest, const unsigned char *__src, size_t __n) {
   for (size_t i = 0; i < __n; ++i) {
     __dest[i] = __src[i];
   }
   return 0;
 }
 
-void *buff_memcpy(unsigned char *__dest, const buff_t::bytes_t &__src, size_t __n) {
+void *BufferCopy(unsigned char *__dest, const Buffer::Bytes &__src, size_t __n) {
   for (size_t i = 0; i < __n; ++i) {
     __dest[i] = __src[i];
   }
   return 0;
 }
 
-std::ostream &operator<<(std::ostream &_os, const item_t &_item) {
+std::ostream &operator<<(std::ostream &_os, const BufferItem &_item) {
   std::cout << "type: " << _item.type << std::endl;
   std::cout << "priority: " << _item.priority << std::endl;
   std::cout << _item.buff << std::endl;
   return _os;
 }
 
-item_t::item_ptr NULL_MSG_ITEM;
+BufferItem::Ptr NULL_MSG_ITEM;
 
-void queue_singleton::put(const element_t &item) {
+void BufferItemQueue::Put(const Element &item) {
   queue_mutex.lock();
-  _queue.push(item);
+  buffer_item_queue.push(item);
   queue_mutex.unlock();
 }
 
-queue_singleton::element_t queue_singleton::get() {
+BufferItem::Ptr BufferItemQueue::Get() {
   queue_mutex.lock();
-  element_t tmp_item = NULL_MSG_ITEM;
-  if (!_queue.empty()) {
-    tmp_item = _queue.top();
-    _queue.pop();
+  Element tmp_item = NULL_MSG_ITEM;
+  if (!buffer_item_queue.empty()) {
+    tmp_item = buffer_item_queue.top();
+    buffer_item_queue.pop();
   }
   queue_mutex.unlock();
 

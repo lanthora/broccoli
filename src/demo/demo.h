@@ -2,13 +2,16 @@
 #define DEMO_DEMO_H
 
 #include "core/message.h"
+#include <string>
 
 namespace broccoli {
 
-const std::string MSG_TYPE_DEMO = "demo";
+const std::string DEMO = "demo";
 
-void demo_handler(const buff_t &buff);
-void demo_service();
+void DemoHandler(const Buffer &buff);
+void DemoService();
+
+void StartDemo();
 
 } // namespace broccoli
 

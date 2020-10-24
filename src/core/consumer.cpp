@@ -7,17 +7,17 @@
 
 namespace broccoli {
 
-void consumer::add_handler(msg_type _type, handler_type _handler) { handlers_map[_type].push_back(_handler); }
+void Consumer::AddHandler(MessageType type, Handler handler) { handlers_map[type].push_back(handler); }
 
-void consumer::operator()() {
-  item_t::item_ptr item;
+void Consumer::operator()() {
+  BufferItem::Ptr item;
   while (true) {
-    item = queue_singleton::get_instance().get();
+    item = BufferItemQueue::GetInstance().Get();
     if (item == NULL_MSG_ITEM) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
       continue;
     }
-    for (handler_type handler : handlers_map[item->type]) {
+    for (Handler handler : handlers_map[item->type]) {
       handler(item->buff);
     }
   }
