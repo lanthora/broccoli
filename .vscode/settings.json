@@ -1,5 +1,5 @@
 {
-  "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: LLVM, ColumnLimit: 120 }",
+  "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: LLVM, ColumnLimit: 120, AllowShortIfStatementsOnASingleLine: true }",
   "C_Cpp.clang_format_sortIncludes": true,
   "C_Cpp.default.includePath": [
     "${workspaceFolder}/**"
@@ -87,5 +87,7 @@
     "regex": "cpp",
     "shared_mutex": "cpp"
   },
-  "typescript.workspaceSymbols.scope": "currentProject"
+  "typescript.workspaceSymbols.scope": "currentProject",
+  "C_Cpp.default.cppStandard": "c++20",
+  "C_Cpp.default.cStandard": "c17"
 }
