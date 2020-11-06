@@ -43,7 +43,7 @@ bool RemoteClient::Run() {
   // 握手包，使用非对称加密，发送对称加密密钥
   // 每个从客户端发送的包都要包含自己的身份信息
   std::string msg = GetRegisterInfo();
-  std::cout << "client send: " << msg << std::endl;
+  // std::cout << "client send: " << msg << std::endl;
 
   // 注释中是一组有效的公私钥
   // MDYwEAYHKoZIzj0CAQYFK4EEABwDIgAEeDMpwTfhO5QrOxbrLYHo1CZOZjSnkUEwtJCaBE5zAcc=
@@ -72,7 +72,7 @@ bool RemoteClient::Run() {
     connection->ReadLine(msg);
     if (msg.empty()) return false;
     msg = Encryption::AesDecrypt(connection->key, msg);
-    std::cout << "client [" << Config::GetInstance().GetID() << "] recv: " << msg << std::endl;
+    std::cout << "client [ " << Config::GetInstance().GetID() << " ] recv: " << msg << std::endl;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 

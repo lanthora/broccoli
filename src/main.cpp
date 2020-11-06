@@ -3,7 +3,6 @@
 #include "remote/remote.h"
 #include "util/config.h"
 
-
 using namespace broccoli;
 
 int main(int argc, char **argv) {

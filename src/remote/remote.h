@@ -13,11 +13,6 @@ void ServerService();
 // 接收到 Server 的命令后，将命令放到 BufferItemQueue，随后调用 recv 继续阻塞
 void ClientService();
 
-// 服务端周期向所有的 Client 控制连接发送心跳，只负责发送
-void HeartbeatService();
-
-void HeartbeatHandler();
-
 void StartServer();
 void StartClient();
 

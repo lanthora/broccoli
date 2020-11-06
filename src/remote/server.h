@@ -83,9 +83,9 @@ class ClientManager {
 public:
   // 在后台定时检查所有连接(ids)，清理超过 1 分钟没有通信的连接
   bool RefreshConnections();
-  RemoteConnection::Ptr GetConnection(std::string id);
-  bool AsyncAddConnection(std::string id, const RemoteConnection::Ptr &conn);
-  bool AsyncDelConnection(std::string id);
+  RemoteConnection::Ptr GetConnection(const std::string &id);
+  bool AsyncAddConnection(const std::string &id, const RemoteConnection::Ptr &conn);
+  bool AsyncDelConnection(const std::string &id);
 
   void SetLastLogin(const std::string &id, int64_t timestamp) { last_login[id] = timestamp; }
   int64_t GetLastLogin(const std::string &id) {

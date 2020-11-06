@@ -1,8 +1,8 @@
 #ifndef CORE_PRODUCER_H
 #define CORE_PRODUCER_H
 
-#include <list>
 #include <functional>
+#include <list>
 
 namespace broccoli {
 

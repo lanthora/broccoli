@@ -53,6 +53,7 @@ bool RemoteConnection::Accept(Ptr &client) {
 }
 
 bool RemoteConnection::Connect(const std::string &ip, const std::string &port) {
+  // 客户端创建好后调用Connect，应该assert
   assert(this->sockfd != -1);
 
   struct sockaddr_in addr;
@@ -66,7 +67,8 @@ bool RemoteConnection::Connect(const std::string &ip, const std::string &port) {
 }
 
 bool RemoteConnection::ReadLine(std::string &msg, bool trusted) const {
-  assert(this->sockfd != -1);
+  // 多线程的情况下，socket可能被其他地方设置为-1，不应该用assert
+  if (this->sockfd == -1) return false;
   msg.clear();
 
   // 对于不可信的数据包，直接读出内容,socket 连接建立后，理论上只有第一个包可能不可信
@@ -105,7 +107,8 @@ bool RemoteConnection::ReadLine(std::string &msg, bool trusted) const {
 }
 
 bool RemoteConnection::WriteLine(const std::string &msg, bool trusted) const {
-  assert(this->sockfd != -1);
+  // 多线程的情况下，socket可能被其他地方设置为-1，不应该用assert
+  if (this->sockfd == -1) return false;
   if (!trusted) {
     send(this->sockfd, msg.c_str(), msg.size(), 0);
     // 等程序运行一段时间以后，就知道这个数据包的实际大小了，

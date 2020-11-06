@@ -4,6 +4,7 @@
 #include "remote/connection.h"
 #include <memory>
 #include <string>
+
 namespace broccoli {
 
 class RemoteClient {
@@ -19,7 +20,6 @@ private:
 private:
   // {"id":"xxxxxxx","key":"xxxxxxxxx","time":"unix_time"}
   std::string GetRegisterInfo();
-
 
 private:
   RemoteClient() {}
