@@ -13,7 +13,7 @@ class RemoteConnection {
 public:
   // 定义握手包可能的最大长度，超出这个长度的握手包直接视为无效，丢弃
   static const int64_t TIMEOUT = 60;
-  static const ssize_t FIRST_MSG_SIZE_MAX = 50;
+  static const ssize_t FIRST_MSG_SIZE_MAX = 200;
   typedef std::shared_ptr<RemoteConnection> Ptr;
   static Ptr Make() { return std::make_shared<RemoteConnection>(); }
   friend bool Forward(RemoteConnection::Ptr dest, RemoteConnection::Ptr src);
@@ -57,21 +57,22 @@ public:
 
   // 关闭 socket
   bool Close();
-
-private:
-  // RemoteConnection 实际上是对 sockfd 的包装
-  int sockfd;
-
-  // 记录最近一次访问时间
-  int64_t GetCurrentTimestamp();
-  int64_t last_connection_time;
+  static int64_t GetCurrentTimestamp();
 
   // 对称加密密钥，每个Connection 都应该有一个唯一的密钥。
   // 这个密钥由客户端随机生成并上传给服务端保存
   std::string key = "";
 
-  // 为了让 RemoteServer 里的 epollfd 可以直接使用 sockfd，设置成 friend
-  friend class RemoteServer;
+private:
+  // RemoteConnection 实际上是对 sockfd 的包装
+  int sockfd = -1;
+
+  // 记录最近一次访问时间
+  int64_t last_connection_time = 0;
+
+  // 为了让 ConnectionManager 里的 epollfd 可以直接使用 sockfd，设置成 friend
+  friend class ConnectionManager;
+  friend class ClientManager;
 };
 
 bool Forward(RemoteConnection::Ptr dest, RemoteConnection::Ptr src);

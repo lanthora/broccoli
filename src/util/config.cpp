@@ -25,10 +25,10 @@ void Config::Init(int argc, char **argv) {
   process_name = argv[0];
 
   if (EndWith(process_name, "broccoli-server")) {
-    //std::cout << "RUN_TYPE: SERVER" << std::endl;
+    // std::cout << "RUN_TYPE: SERVER" << std::endl;
     this->current_type = SERVER;
   } else if (EndWith(process_name, "broccoli-client")) {
-    //std::cout << "RUN_TYPE: CLIENT" << std::endl;
+    // std::cout << "RUN_TYPE: CLIENT" << std::endl;
     this->current_type = CLIENT;
   }
 
@@ -37,15 +37,14 @@ void Config::Init(int argc, char **argv) {
       continue;
     } else if (StartWith(std::string(argv[i]), "--address")) {
       this->address = std::string(argv[i + 1]);
-      //std::cout << "address: " << this->address << std::endl;
     } else if (StartWith(std::string(argv[i]), "--key")) {
       this->key = std::string(argv[i + 1]);
-      //std::cout << "key: " << this->key << std::endl;
+    } else if (StartWith(std::string(argv[i]), "--id")) {
+      this->id = std::string(argv[i + 1]);
     }
   }
 
   // TODO:需要在这里添加参数校验，两个必填的参数如果没有就打印错误信息并退出进程
-
 }
 
 } // namespace broccoli

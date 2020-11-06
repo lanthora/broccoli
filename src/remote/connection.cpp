@@ -108,6 +108,9 @@ bool RemoteConnection::WriteLine(const std::string &msg, bool trusted) const {
   assert(this->sockfd != -1);
   if (!trusted) {
     send(this->sockfd, msg.c_str(), msg.size(), 0);
+    // 等程序运行一段时间以后，就知道这个数据包的实际大小了，
+    // 到时候再修改 FIRST_MSG_SIZE_MAX 的值
+    std::cout << "FirstMsgSize: " << msg.size() << std::endl;
     return true;
   }
   // 字符长度超过 2^16 - 1 ，不是合法数据
@@ -142,11 +145,13 @@ bool RemoteConnection::Close() {
   return true;
 }
 
-bool RemoteConnection::IsTimeout() { return GetCurrentTimestamp() - last_connection_time > TIMEOUT; }
+bool RemoteConnection::IsTimeout() { return GetCurrentTimestamp() - last_connection_time > 2 * TIMEOUT; }
+
 bool RemoteConnection::TagLastConnection() {
   last_connection_time = GetCurrentTimestamp();
   return true;
 }
+
 int64_t RemoteConnection::GetCurrentTimestamp() {
   return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }

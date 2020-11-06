@@ -17,6 +17,11 @@ private:
   RemoteConnection::Ptr connection;
 
 private:
+  // {"id":"xxxxxxx","key":"xxxxxxxxx","time":"unix_time"}
+  std::string GetRegisterInfo();
+
+
+private:
   RemoteClient() {}
 
 public:

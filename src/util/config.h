@@ -11,11 +11,13 @@ public:
   const RUN_TYPE &GetRunType() { return this->current_type; }
   const std::string &GetAddress() { return this->address; }
   const std::string &GetKey() { return this->key; }
+  const std::string &GetID() { return this->id; }
 
 private:
   RUN_TYPE current_type = INVALID;
   std::string address = "";
   std::string key = "";
+  std::string id = "";
 
 private:
   Config() {}

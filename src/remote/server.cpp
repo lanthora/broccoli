@@ -1,13 +1,16 @@
 #include "remote/server.h"
+#include "third/rapidjson/document.h"
+#include "third/rapidjson/error/en.h"
+#include "third/rapidjson/writer.h"
 #include "util/config.h"
-#include <functional>
+#include "util/encryption.h"
 #include <iostream>
 #include <sys/epoll.h>
 
 namespace broccoli {
 
-bool RemoteServer::Init() {
-  std::cout << "RemoteServer::Init" << std::endl;
+bool ConnectionManager::Init() {
+  std::cout << "ConnectionManager::Init" << std::endl;
   const std::string &address = Config::GetInstance().GetAddress();
   const std::string &key = Config::GetInstance().GetKey();
   assert(!address.empty());
@@ -29,11 +32,9 @@ bool RemoteServer::Init() {
   return true;
 }
 
-bool RemoteServer::Run() {
+bool ConnectionManager::Run() {
 
-  std::thread(std::bind(&RemoteServer::RefreshConnections, this)).detach();
-
-  std::cout << "RemoteServer::Run" << std::endl;
+  std::cout << "ConnectionManager::Run" << std::endl;
   std::vector<RemoteConnection::Ptr> connections;
 
   while (true) {
@@ -55,12 +56,12 @@ bool RemoteServer::Run() {
   return true;
 }
 
-bool RemoteServer::Close() {
-  std::cout << "RemoteServer::Close" << std::endl;
+bool ConnectionManager::Close() {
+  std::cout << "ConnectionManager::Close" << std::endl;
   return false;
 }
 
-bool RemoteServer::AddClient(const RemoteConnection::Ptr &connection, const uint32_t events) {
+bool ConnectionManager::AddClient(const RemoteConnection::Ptr &connection, const uint32_t events) {
   connection->SetNonBlock();
   this->AddConnection(connection->sockfd, connection);
   //定义事件
@@ -70,22 +71,22 @@ bool RemoteServer::AddClient(const RemoteConnection::Ptr &connection, const uint
 
   int ret = epoll_ctl(epollfd, EPOLL_CTL_ADD, connection->sockfd, &ev);
   if (ret < 0) {
-    std::cout << "RemoteServer::AddClient EPOLL_CTL_ADD Error" << std::endl;
+    std::cout << "ConnectionManager::AddClient EPOLL_CTL_ADD Error" << std::endl;
     return false;
   }
   return true;
 }
 
-bool RemoteServer::DelClient(const RemoteConnection::Ptr &connection) {
+bool ConnectionManager::DelClient(const RemoteConnection::Ptr &connection) {
+  connection->Close();
   int ret = epoll_ctl(epollfd, EPOLL_CTL_DEL, connection->sockfd, NULL);
-  if (ret < 0) {
-    std::cout << "RemoteServer::DelClient EPOLL_CTL_DEL Error" << std::endl;
-    return false;
-  }
+
+  // 在 epoll 中移除时出现了错误，然而实际上我们并不关心这里出错
+  if (ret < 0) return false;
   return true;
 }
 
-bool RemoteServer::WaitClient(std::vector<RemoteConnection::Ptr> &connections) {
+bool ConnectionManager::WaitClient(std::vector<RemoteConnection::Ptr> &connections) {
   connections.clear();
   struct epoll_event evs[10];
 
@@ -94,7 +95,7 @@ bool RemoteServer::WaitClient(std::vector<RemoteConnection::Ptr> &connections) {
 
   // 异常
   if (nfds < 0) {
-    std::cerr << "RemoteServer::WaitClient epoll_wait Error" << std::endl;
+    std::cerr << "ConnectionManager::WaitClient epoll_wait Error" << std::endl;
     return false;
   }
 
@@ -107,12 +108,13 @@ bool RemoteServer::WaitClient(std::vector<RemoteConnection::Ptr> &connections) {
   return true;
 }
 
-bool RemoteServer::IsNewConnection(const RemoteConnection::Ptr &conn) {
+bool ConnectionManager::IsNewConnection(const RemoteConnection::Ptr &conn) {
   bool is_new_connection = conn->sockfd == server->sockfd;
   return is_new_connection;
 }
 
-bool RemoteServer::HandleNewConnection() {
+bool ConnectionManager::HandleNewConnection() {
+  std::cout << "HandleNewConnection" << std::endl;
   bool ok;
   RemoteConnection::Ptr new_client;
   ok = this->server->Accept(new_client);
@@ -120,128 +122,203 @@ bool RemoteServer::HandleNewConnection() {
   ok = this->AddClient(new_client, EPOLLET);
   assert(ok);
   // 临时存
-  new_conns.insert(new_client->sockfd);
+  news.insert(new_client->sockfd);
   return true;
 }
 
-bool RemoteServer::IsFirstMsg(const RemoteConnection::Ptr &conn) {
-  bool is_first_msg = new_conns.find(conn->sockfd) != new_conns.end();
+bool ConnectionManager::IsFirstMsg(const RemoteConnection::Ptr &conn) {
+  bool is_first_msg = news.find(conn->sockfd) != news.end();
   return is_first_msg;
 }
+bool ConnectionManager::IsValidFirstMsg(const rapidjson::Document &d) {
+  if (d.HasParseError()) return false;
+  if (!d.HasMember("id")) return false;
+  if (!d.HasMember("key")) return false;
+  if (!d.HasMember("timestamp")) return false;
+  if (!d["id"].IsString()) return false;
+  if (!d["key"].IsString()) return false;
+  if (!d["timestamp"].IsInt64()) return false;
+  return true;
+}
 
-bool RemoteServer::HandleFirstMsg(const RemoteConnection::Ptr &conn) {
-  new_conns.erase(conn->sockfd);
+bool ConnectionManager::HandleFirstMsg(const RemoteConnection::Ptr &conn) {
+  news.erase(conn->sockfd);
   // 首先调用一次recv，通过解密算法解密第一组数据
   std::string msg;
   conn->ReadLine(msg, false);
-  std::cout << "msg.size(): " << msg.size() << "  msg: " << msg << std::endl;
-  // 在解析后的数据里拿到 id 和 key，有这两个数据的客户端认为是有效的
-  std::string id = "123";
-  conn->key = "123";
 
-  // 验证客户端连接无效，Close，并从文件epoll中移除
+  // 注释中是一组有效的公私钥
+  // MC4CAQAwEAYHKoZIzj0CAQYFK4EEABwEFzAVAgEBBBBOL8immOPCraXn7LM1q/oG
+  std::string prv_key = Config::GetInstance().GetKey();
 
-  if (id.empty() || conn->key.empty()) {
-    conn->Close();
+  // 同样需要校验 prv_key 后传递给函数
+  std::string palnt_text = Encryption::EccDecrypt(prv_key, msg);
+  std::cout << "HandleFirstMsg  msg: " << palnt_text << std::endl;
+
+  rapidjson::Document d;
+  d.Parse(palnt_text.c_str());
+
+  // 检查传入的数据
+  if (!IsValidFirstMsg(d)) {
     DelClient(conn);
     return false;
   }
+  std::string id = d["id"].GetString();
+  conn->key = d["key"].GetString();
+  int64_t login_timestamp = d["timestamp"].GetInt64();
+
+  // 检查重放攻击
+  if (login_timestamp <= ClientManager::GetInstance().GetLastLogin(id)) {
+    DelClient(conn);
+    return false;
+  }
+  ClientManager::GetInstance().SetLastLogin(id, login_timestamp);
+
+  // 验证通过的客户端，可能持有相同的id，也就是某个客户端发起了两次连接
+  RemoteConnection::Ptr old_client = ClientManager::GetInstance().GetConnection(id);
+  if (old_client) {
+    old_client->Close();
+    DelConnection(old_client->sockfd);
+    ClientManager::GetInstance().AsyncDelConnection(id);
+  }
 
   // 成功的连接，打Tag
   conn->TagLastConnection();
 
-  // 验证通过的客户端，可能持有相同的id，也就是某个客户端发起了两次连接
-  // 这个时候移除先前存在的连接。这种情况只会发生在1分钟内发起两次连接请求的情况
-  // 如果超过 1 分钟，这个连接相关的数据结构应该已经被清除了才对
-  // 所以绝大多数情况，不应该进入这个逻辑
-  RemoteConnection::Ptr old_client = this->GetConnection(id);
-  if (old_client) {
-
-    old_client->Close();
-    DelConnection(old_client->sockfd);
-    DelConnection(id);
-  }
+  // 告诉客户端成功连接了
+  msg = "Connected, Plase wait for the order";
+  std::cout << "server send: " << msg << std::endl;
+  msg = Encryption::AesEncrypt(conn->key, msg);
+  conn->WriteLine(msg);
 
   // 保存这个连接，并调用 AddClient
   this->AddConnection(conn->sockfd, conn);
-  this->AddConnection(id, conn);
+
+  // 一定要设置完 conn->key 再添加，不然发送心跳的进程取不出值
+  ClientManager::GetInstance().AsyncAddConnection(id, conn);
   return true;
 }
 
-bool RemoteServer::HandleClientConnection(const RemoteConnection::Ptr &conn) {
+bool ConnectionManager::HandleClientConnection(const RemoteConnection::Ptr &conn) {
 
   std::string msg;
   conn->ReadLine(msg);
-  std::cout << "server recv: " << msg << std::endl;
 
+  // 客户端断开连接
   if (!msg.size()) {
     this->DelClient(conn);
-    conn->Close();
     return true;
   }
 
+  msg = Encryption::AesDecrypt(conn->key, msg);
+
   // 成功的连接，打Tag
   conn->TagLastConnection();
-  msg = "World";
-  conn->WriteLine("World");
-  std::cout << "server send: " << msg << std::endl;
+
+  // 其他处理逻辑
+  // do something
+
   return false;
 }
 
 // 根据 id 或 文件描述符 获取连接
-RemoteConnection::Ptr RemoteServer::GetConnection(std::string id) {
-  auto it = id_conns.find(id);
-  return it == id_conns.end() ? nullptr : (*it).second;
+RemoteConnection::Ptr ClientManager::GetConnection(std::string id) {
+  auto it = ids.find(id);
+  return it == ids.end() ? nullptr : (*it).second;
 }
 
-RemoteConnection::Ptr RemoteServer::GetConnection(int fd) {
-  auto it = fd_conns.find(fd);
-  return it == fd_conns.end() ? nullptr : (*it).second;
+RemoteConnection::Ptr ConnectionManager::GetConnection(int fd) {
+  auto it = fds.find(fd);
+  return it == fds.end() ? nullptr : (*it).second;
 }
 
-bool RemoteServer::AddConnection(std::string id, const RemoteConnection::Ptr &conn) {
-  id_conns[id] = conn;
+bool ConnectionManager::AddConnection(int fd, const RemoteConnection::Ptr &conn) {
+  fds[fd] = conn;
   return true;
 }
 
-bool RemoteServer::AddConnection(int fd, const RemoteConnection::Ptr &conn) {
-  fd_conns[fd] = conn;
+bool ConnectionManager::DelConnection(int fd) {
+  fds.erase(fd);
   return true;
 }
 
-bool RemoteServer::DelConnection(std::string id) {
-  id_conns.erase(id);
+bool ClientManager::AsyncAddConnection(std::string id, const RemoteConnection::Ptr &conn) {
+  new_ids_mutex.lock();
+  new_ids.push(std::pair<std::string, RemoteConnection::Ptr>(id, conn));
+  new_ids_mutex.unlock();
   return true;
 }
 
-bool RemoteServer::DelConnection(int fd) {
-  fd_conns.erase(fd);
+bool ClientManager::AsyncDelConnection(std::string id) {
+  old_ids_mutex.lock();
+  old_ids.push(id);
+  old_ids_mutex.unlock();
   return true;
 }
 
-// 开新线程，扫描 id_conns，
+void ClientManager::DelOldIds() {
+  old_ids_mutex.lock();
+  while (!old_ids.empty()) {
+    auto id = old_ids.front();
+    old_ids.pop();
+    auto it = ids.find(id);
+    if (it == ids.end()) continue;
+    std::cout << "clean [" << id << "]" << std::endl;
+    ids.erase(it);
+  }
+  old_ids_mutex.unlock();
+}
+
+void ClientManager::AddNewIds() {
+  new_ids_mutex.lock();
+  while (!new_ids.empty()) {
+    auto id = new_ids.front();
+    new_ids.pop();
+    ids[id.first] = id.second;
+  }
+  new_ids_mutex.unlock();
+}
+
+// 开新线程，扫描 ids，
 // 如果长时间未连接，Close，并且在两个 map 里删掉
 // 这里需要考虑红黑树迭代器失效的问题
-bool RemoteServer::RefreshConnections() {
-  // 这个线程会持续运行，不会退出
+bool ClientManager::RefreshConnections() {
+  std::cout << "Start RefreshConnections" << std::endl;
   while (true) {
-    // 根据当前连接数，确定发送间隔，如果超时时间是 1 分钟，就每隔30秒发送一次
-    // 500 = 1000/2，毫秒变秒，并把超时时间减半
-    const int sleep_time = 500 * RemoteConnection::TIMEOUT / std::max(id_conns.size(), size_t(1));
+    // 更新ids
+    DelOldIds();
+    AddNewIds();
 
-    auto it = id_conns.begin();
-    while (it != id_conns.end()) {
+    // 计算延迟
+    double delay = static_cast<double>(RemoteConnection::TIMEOUT);
+    delay /= std::max(static_cast<int>(ids.size()), 1);
+    delay /= 2;
+    delay *= 1000;
+
+    // 没有元素，休息一会再回来
+    if (ids.empty()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(delay)));
+      continue;
+    }
+
+    std::cout << "delay: " << delay << std::endl;
+
+    auto it = ids.begin();
+    while (it != ids.end()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(delay)));
       auto conn = *(it++);
-      // 清理最近一次心跳没有响应的客户端
+
+      // 客户端断开连接 或者 超时，调用异步清理动作，本次不发送消息
       if (conn.second->sockfd == -1 || conn.second->IsTimeout()) {
         conn.second->Close();
-        DelConnection(conn.first);
-        DelConnection(conn.second->sockfd);
+        AsyncDelConnection(conn.first);
+        ConnectionManager::GetInstance().DelConnection(conn.second->sockfd);
         continue;
       }
-      conn.second->WriteLine("123");
-
-      std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+      std::string msg = "Hello";
+      std::cout << "server send: [" << msg << "] to: [" << conn.first << "]" << std::endl;
+      msg = Encryption::AesEncrypt(conn.second->key, msg);
+      conn.second->WriteLine(msg);
     }
   }
 }

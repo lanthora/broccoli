@@ -2,11 +2,13 @@
 #define CORE_PRODUCER_H
 
 #include <list>
+#include <functional>
 
 namespace broccoli {
 
 class Producer {
-  typedef void (*Service)();
+
+  typedef std::function<void()> Service;
 
 private:
   std::list<Service> service_list;

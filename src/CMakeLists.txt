@@ -4,8 +4,7 @@ project(broccoli)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-# 静态链接
-set(CMAKE_EXE_LINKER_FLAGS "-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
+#set(CMAKE_EXE_LINKER_FLAGS "-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
 
 SET(CMAKE_BUILD_TYPE "Debug")
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
@@ -27,5 +26,8 @@ target_link_libraries(broccoli demo)
 target_link_libraries(broccoli frp)
 target_link_libraries(broccoli locale)
 target_link_libraries(broccoli remote)
+
+target_link_libraries(broccoli cryptopp)
+target_link_libraries(broccoli pthread)
 
 
