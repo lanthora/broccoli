@@ -3,13 +3,14 @@
 
 #include "core/message.h"
 
+#include <functional>
 #include <list>
 #include <map>
 
 namespace broccoli {
 
 class Consumer {
-  typedef void (*Handler)(const Buffer &buff);
+  typedef std::function<void(const StringBuffer &)> Handler;
   typedef std::string MessageType;
 
 private:

@@ -11,35 +11,14 @@
 
 namespace broccoli {
 
-struct Buffer {
-  typedef std::unique_ptr<unsigned char[]> Bytes;
-  typedef size_t Size;
-  Size size = 0;
-  Bytes bytes = nullptr;
-  Buffer() {}
-
-  Buffer(Buffer &&other) {
-    this->size = std::move(other.size);
-    this->bytes = std::move(other.bytes);
-  }
-
-  Buffer &operator=(Buffer &&other) {
-    this->size = std::move(other.size);
-    this->bytes = std::move(other.bytes);
-    return *this;
-  }
-};
-
-std::ostream &operator<<(std::ostream &os, const Buffer &buff);
-void *BufferCopy(Buffer::Bytes &__dest, const unsigned char *__src, size_t __n);
-void *BufferCopy(unsigned char *__dest, const Buffer::Bytes &__src, size_t __n);
+typedef std::string StringBuffer;
 
 struct BufferItem {
   typedef std::shared_ptr<BufferItem> Ptr;
-
+  static BufferItem::Ptr Make() { return std::make_shared<BufferItem>(); }
   std::string type;
   unsigned int priority = 0;
-  Buffer buff;
+  StringBuffer buff;
 };
 
 std::ostream &operator<<(std::ostream &os, const BufferItem &item);

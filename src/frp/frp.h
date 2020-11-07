@@ -7,7 +7,7 @@
 namespace broccoli {
 
 const std::string FRP = "frp";
-void FrpHandler(const Buffer &buff);
+void FrpHandler(const StringBuffer &buff);
 
 } // namespace broccoli
 

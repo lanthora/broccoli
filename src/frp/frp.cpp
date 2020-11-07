@@ -2,6 +2,6 @@
 
 namespace broccoli {
 
-void FrpHandler(const Buffer &buff) {}
+void FrpHandler(const StringBuffer &buff) {}
 
 } // namespace broccoli

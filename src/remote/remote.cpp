@@ -31,6 +31,8 @@ void ClientService() {
 }
 
 void StartServer() {
+
+   std::queue<std::thread> threads;
   Producer::GetInstance().AddService(std::bind(&ClientManager::RefreshConnections, &ClientManager::GetInstance()));
   Producer::GetInstance().AddService(ServerService);
   // Producer::GetInstance().AddService(UnixDomainSocketService);

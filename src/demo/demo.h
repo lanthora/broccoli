@@ -8,7 +8,7 @@ namespace broccoli {
 
 const std::string DEMO = "demo";
 
-void DemoHandler(const Buffer &buff);
+void DemoHandler(const StringBuffer &buff);
 void DemoService();
 
 void StartDemo();
