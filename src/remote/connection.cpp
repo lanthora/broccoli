@@ -1,5 +1,6 @@
 #include "remote/connection.h"
 #include "util/config.h"
+#include "util/log.h"
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
@@ -113,7 +114,7 @@ bool RemoteConnection::WriteLine(const std::string &msg, bool trusted) const {
     send(this->sockfd, msg.c_str(), msg.size(), 0);
     // 等程序运行一段时间以后，就知道这个数据包的实际大小了，
     // 到时候再修改 FIRST_MSG_SIZE_MAX 的值
-    std::cout << "FirstMsgSize: " << msg.size() << std::endl;
+    LOG::GetInstance().FormatWrite(LOG::INFO, "FirstMsgSize: %d", msg.size());
     return true;
   }
   // 字符长度超过 2^16 - 1 ，不是合法数据

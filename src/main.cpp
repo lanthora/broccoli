@@ -1,5 +1,4 @@
-#include "demo/demo.h"
-#include "locale/domain.h"
+#include "log/log.h"
 #include "remote/remote.h"
 #include "util/config.h"
 
@@ -15,7 +14,7 @@ int main(int argc, char **argv) {
     StartClient();
     break;
   default:
-    StartDemo();
+    StartLog();
     break;
   }
 }

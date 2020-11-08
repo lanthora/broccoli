@@ -17,11 +17,13 @@ struct BufferItem {
   typedef std::shared_ptr<BufferItem> Ptr;
   static BufferItem::Ptr Make() { return std::make_shared<BufferItem>(); }
   std::string type;
+  // 值越大优先级越高
   unsigned int priority = 0;
   StringBuffer buff;
-};
 
-std::ostream &operator<<(std::ostream &os, const BufferItem &item);
+  // 生成一个对象并放入生产者队列
+  static void GenerateAndSend(const std::string &type, unsigned int priority, const StringBuffer &buff);
+};
 
 extern BufferItem::Ptr NULL_MSG_ITEM;
 

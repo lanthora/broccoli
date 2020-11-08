@@ -1,9 +1,22 @@
 #include "util/random.h"
+#include <chrono>
 #include <random>
+#include <thread>
 
 namespace broccoli {
 
-std::string RandomPrintableStringGenerator::RandString(size_t length) {
+Random &Random::GetInstance() {
+  static Random instance;
+  return instance;
+}
+
+Random::Random() {
+  for (int i = 0; i < printable_char_size; ++i) {
+    cs[i] = static_cast<char>(i + 33);
+  }
+}
+
+std::string Random::RandPrintableString(size_t length) {
   std::string ans;
   ans.resize(length);
   for (size_t i = 0; i < length; ++i) {
@@ -12,15 +25,12 @@ std::string RandomPrintableStringGenerator::RandString(size_t length) {
   return ans;
 }
 
-RandomPrintableStringGenerator::RandomPrintableStringGenerator() {
-  for (int i = 0; i < printable_char_size; ++i) {
-    cs[i] = static_cast<char>(i + 33);
+void Random::RandSleep(unsigned int begin, unsigned int end) {
+  if (begin < end) {
+    std::this_thread::sleep_for(std::chrono::milliseconds((rand() % (end - begin)) + begin));
+  } else {
+    std::this_thread::sleep_for(std::chrono::milliseconds(begin));
   }
-}
-
-RandomPrintableStringGenerator &RandomPrintableStringGenerator::GetInstance() {
-  static RandomPrintableStringGenerator instance;
-  return instance;
 }
 
 } // namespace broccoli

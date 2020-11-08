@@ -1,5 +1,6 @@
 
 #include "util/config.h"
+#include "util/log.h"
 #include <iostream>
 #include <string>
 
@@ -25,11 +26,9 @@ void Config::Init(int argc, char **argv) {
   process_name = argv[0];
 
   if (EndWith(process_name, "broccoli-server")) {
-    // std::cout << "RUN_TYPE: SERVER" << std::endl;
-    this->current_type = SERVER;
+    this->current_type = RUN_TYPE::SERVER;
   } else if (EndWith(process_name, "broccoli-client")) {
-    // std::cout << "RUN_TYPE: CLIENT" << std::endl;
-    this->current_type = CLIENT;
+    this->current_type = RUN_TYPE::CLIENT;
   }
 
   for (int i = 1; i < argc - 1; ++i) {
@@ -43,6 +42,8 @@ void Config::Init(int argc, char **argv) {
       this->id = std::string(argv[i + 1]);
     }
   }
+
+
 
   // TODO:需要在这里添加参数校验，两个必填的参数如果没有就打印错误信息并退出进程
 }

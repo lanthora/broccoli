@@ -1,3 +1,6 @@
+#ifndef UTIL_CONFIG_H
+#define UTIL_CONFIG_H
+
 #include <assert.h>
 #include <string>
 
@@ -6,7 +9,7 @@ namespace broccoli {
 class Config {
 
 public:
-  enum RUN_TYPE { INVALID, SERVER, CLIENT };
+  enum class RUN_TYPE { INVALID, SERVER, CLIENT };
   void Init(int argc, char **argv);
   const RUN_TYPE &GetRunType() { return this->current_type; }
   const std::string &GetAddress() { return this->address; }
@@ -14,7 +17,7 @@ public:
   const std::string &GetID() { return this->id; }
 
 private:
-  RUN_TYPE current_type = INVALID;
+  RUN_TYPE current_type = RUN_TYPE::INVALID;
   std::string address = "";
   std::string key = "";
   std::string id = "";
@@ -30,3 +33,5 @@ public:
 };
 
 } // namespace broccoli
+
+#endif

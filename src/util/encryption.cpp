@@ -12,7 +12,7 @@
 
 namespace broccoli {
 
-void Encryption::GenerateEccKeys(std::string &prv_key, std::string &pub_key) {
+void Encryption::GenerateAuthKeys(std::string &prv_key, std::string &pub_key) {
 
   CryptoPP::AutoSeededRandomPool rnd(false);
 
@@ -34,7 +34,7 @@ void Encryption::GenerateEccKeys(std::string &prv_key, std::string &pub_key) {
   prv_encoder.MessageEnd();
 }
 
-std::string Encryption::EccEncrypt(const std::string &pub_key, const std::string &plain_text) {
+std::string Encryption::AuthEncrypt(const std::string &pub_key, const std::string &plain_text) {
   assert(pub_key.size() == 76);
   std::string cipher_text;
 
@@ -50,7 +50,7 @@ std::string Encryption::EccEncrypt(const std::string &pub_key, const std::string
   return cipher_text;
 }
 
-std::string Encryption::EccDecrypt(const std::string &prv_key, const std::string &cipher_text) {
+std::string Encryption::AuthDecrypt(const std::string &prv_key, const std::string &cipher_text) {
   assert(prv_key.size() == 64);
   std::string plain_text;
 
@@ -64,7 +64,7 @@ std::string Encryption::EccDecrypt(const std::string &prv_key, const std::string
   return plain_text;
 }
 
-void Encryption::GenerateAesKey(std::string &key) {
+void Encryption::GenerateKey(std::string &key) {
   CryptoPP::byte byte_key[CryptoPP::AES::DEFAULT_KEYLENGTH];
   CryptoPP::AutoSeededRandomPool rnd(false);
   rnd.GenerateBlock(byte_key, CryptoPP::AES::DEFAULT_KEYLENGTH);
@@ -74,7 +74,7 @@ void Encryption::GenerateAesKey(std::string &key) {
   key_encoder.MessageEnd();
 }
 
-std::string Encryption::AesEncrypt(const std::string &key, const std::string &plain_text) {
+std::string Encryption::Encrypt(const std::string &key, const std::string &plain_text) {
   assert(key.size() == 24);
 
   CryptoPP::byte iv[CryptoPP::AES::BLOCKSIZE];
@@ -98,7 +98,7 @@ std::string Encryption::AesEncrypt(const std::string &key, const std::string &pl
   return string_iv + cipher_text;
 }
 
-std::string Encryption::AesDecrypt(const std::string &key, const std::string &cipher_text) {
+std::string Encryption::Decrypt(const std::string &key, const std::string &cipher_text) {
   assert(key.size() == 24);
 
   CryptoPP::byte byte_key[CryptoPP::AES::DEFAULT_KEYLENGTH];
@@ -123,14 +123,6 @@ std::string Encryption::AesDecrypt(const std::string &key, const std::string &ci
   stf_decryptor.MessageEnd();
 
   return plant_text;
-}
-
-void Encryption::PrintStringInHex(const std::string s) {
-  for (auto c : s) {
-    std::cout << std::hex << std::setw(2) << std::setiosflags(std::ios::uppercase);
-    std::cout << std::setfill('0') << (0xFF & c) << ' ';
-  }
-  std::cout << std::endl;
 }
 
 } // namespace broccoli

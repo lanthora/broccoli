@@ -1,6 +1,7 @@
-#include "demo/demo.h"
+#include "log/log.h"
 #include "core/consumer.h"
 #include "core/producer.h"
+#include "util/log.h"
 #include "util/random.h"
 #include <chrono>
 #include <cstdlib>
@@ -11,32 +12,29 @@
 
 namespace broccoli {
 
-void DemoHandler(const StringBuffer &buff) {
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  std::cout << "DemoHandler: " << buff << std::endl;
-}
+void LogHandler(const StringBuffer &buff) { LOG::GetInstance().FormatWrite(LOG::INFO, "LogHandler: %s", buff.c_str()); }
 
-void DemoService() {
+void RandomFakeLogService() {
   while (true) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    Random::GetInstance().RandSleep(100);
 
     BufferItem::Ptr item = BufferItem::Make();
-    item->type = DEMO;
+    item->type = MSG_TYPE_LOG;
     item->priority = 0;
-    item->buff = RandomPrintableStringGenerator::GetInstance().RandString(32);
+    item->buff = Random::GetInstance().RandPrintableString(32);
 
     BufferItemQueue::GetInstance().Put(item);
-    std::cout << "DemoService: " << item->buff << std::endl;
+    LOG::GetInstance().FormatWrite(LOG::INFO, "RandomFakeLogService: %s", item->buff.c_str());
   }
 }
 
-void StartDemo() {
+void StartLog() {
 
   std::queue<std::thread> threads;
-  Producer::GetInstance().AddService(DemoService);
+  Producer::GetInstance().AddService(RandomFakeLogService);
   threads.push(std::move(std::thread(Producer::GetInstance())));
 
-  Consumer::GetInstance().AddHandler(DEMO, DemoHandler);
+  Consumer::GetInstance().AddHandler(MSG_TYPE_LOG, LogHandler);
   threads.push(std::move(std::thread(Consumer::GetInstance())));
 
   while (!threads.empty()) {

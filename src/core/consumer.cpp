@@ -1,9 +1,5 @@
 #include "core/consumer.h"
-#include <chrono>
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
-#include <thread>
+#include "util/random.h"
 
 namespace broccoli {
 
@@ -14,7 +10,7 @@ void Consumer::operator()() {
   while (true) {
     item = BufferItemQueue::GetInstance().Get();
     if (item == NULL_MSG_ITEM) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      Random::GetInstance().RandSleep(10);
       continue;
     }
     for (Handler handler : handlers_map[item->type]) {

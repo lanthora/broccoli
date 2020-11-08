@@ -2,13 +2,6 @@
 
 namespace broccoli {
 
-std::ostream &operator<<(std::ostream &_os, const BufferItem &_item) {
-  std::cout << "type: " << _item.type << std::endl;
-  std::cout << "priority: " << _item.priority << std::endl;
-  std::cout << _item.buff << std::endl;
-  return _os;
-}
-
 BufferItem::Ptr NULL_MSG_ITEM;
 
 void BufferItemQueue::Put(const Element &item) {
@@ -19,7 +12,7 @@ void BufferItemQueue::Put(const Element &item) {
 
 BufferItem::Ptr BufferItemQueue::Get() {
   queue_mutex.lock();
-  Element tmp_item = NULL_MSG_ITEM;
+  auto tmp_item = NULL_MSG_ITEM;
   if (!buffer_item_queue.empty()) {
     tmp_item = buffer_item_queue.top();
     buffer_item_queue.pop();
@@ -27,6 +20,14 @@ BufferItem::Ptr BufferItemQueue::Get() {
   queue_mutex.unlock();
 
   return tmp_item;
+}
+
+void BufferItem::GenerateAndSend(const std::string &type, unsigned int priority, const StringBuffer &buff) {
+  auto p = Make();
+  p->type = type;
+  p->priority = priority;
+  p->buff = buff;
+  BufferItemQueue::GetInstance().Put(p);
 }
 
 } // namespace broccoli
