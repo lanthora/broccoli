@@ -1,10 +1,10 @@
 #ifndef UTIL_LOG_H
 #define UTIL_LOG_H
 
+#include <mutex>
 #include <string>
 
 namespace broccoli {
-
 
 class LOG {
 public:
@@ -15,7 +15,6 @@ public:
   static LOG &GetInstance();
 
 private:
-  char *buffer;
   LOG::LEVEL level;
   std::string filename;
 
@@ -23,6 +22,9 @@ private:
   std::string LevelToString(const LOG::LEVEL &level);
   std::string CurrentTime();
   static const unsigned int LOGBUFFERSIZE = 1024 * 512;
+
+  char *buffer;
+  std::mutex buffer_mutex;
 
 public:
   LOG(const LOG &) = delete;

@@ -1,14 +1,8 @@
 #include "util/log.h"
-#include <algorithm>
-#include <cstring>
-#include <ctime>
+#include <cstdarg>
 #include <fstream>
 #include <iomanip>
-#include <iostream>
-#include <memory>
 #include <sstream>
-#include <stdarg.h>
-#include <stdexcept>
 #include <sys/time.h>
 
 namespace broccoli {
@@ -34,16 +28,17 @@ void LOG::Write(const LOG::LEVEL &level, const std::string &log) {
   logfile << "[" << LevelToString(level) << "]";
   logfile << "[" << CurrentTime() << "]:";
   logfile << log << std::endl;
-  logfile.flush();
   logfile.close();
 }
 
 void LOG::FormatWrite(const LOG::LEVEL &level, const char *fmt, ...) {
-  va_list ap;
+  buffer_mutex.lock();
+  std::va_list ap;
   va_start(ap, fmt);
-  vsnprintf(buffer, LOGBUFFERSIZE - 1, fmt, ap);
+  std::vsnprintf(buffer, LOGBUFFERSIZE - 1, fmt, ap);
   va_end(ap);
   this->Write(level, buffer);
+  buffer_mutex.unlock();
 }
 
 std::string LOG::LevelToString(const LOG::LEVEL &level) {

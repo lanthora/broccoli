@@ -10,6 +10,8 @@
 namespace broccoli {
 
 bool RemoteClient::Init() {
+  LOG::GetInstance().Init(LOG::NONE, "/tmp/broccoli-client.log");
+
   const std::string &address = Config::GetInstance().GetAddress();
   // 用户输入的非对称加密公钥
   const std::string &key = Config::GetInstance().GetKey();
@@ -35,8 +37,6 @@ bool RemoteClient::Init() {
   Encryption::GenerateKey(random_key);
   connection->key = random_key;
   assert(!connection->key.empty());
-
-  LOG::GetInstance().Init(LOG::ALL, "/tmp/broccoli-client.log");
 
   return true;
 }

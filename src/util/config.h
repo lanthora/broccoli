@@ -15,6 +15,7 @@ public:
   const std::string &GetAddress() { return this->address; }
   const std::string &GetKey() { return this->key; }
   const std::string &GetID() { return this->id; }
+  static void UpdateLimit();
 
 private:
   RUN_TYPE current_type = RUN_TYPE::INVALID;

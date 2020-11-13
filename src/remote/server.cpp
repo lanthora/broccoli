@@ -15,6 +15,7 @@ namespace broccoli {
 
 bool ConnectionManager::Init() {
   LOG::GetInstance().Init(LOG::ALL, "/tmp/broccoli-server.log");
+  Config::UpdateLimit();
   LOG::GetInstance().FormatWrite(LOG::INFO, "ConnectionManager::Init");
   const auto &address = Config::GetInstance().GetAddress();
   const auto &key = Config::GetInstance().GetKey();
@@ -221,7 +222,7 @@ void ClientManager::DelOldIds() {
     olds.pop();
     auto it = ids.find(id);
     if (it == ids.end()) continue;
-    LOG::GetInstance().FormatWrite(LOG::INFO, "del [ %s ]", id.c_str());
+    LOG::GetInstance().FormatWrite(LOG::DEBUG, "del [ %s ]", id.c_str());
     ids.erase(it);
   }
   oldmutex.unlock();
@@ -231,7 +232,7 @@ void ClientManager::AddNewIds() {
   newmutex.lock();
   while (!news.empty()) {
     auto id = news.front();
-    LOG::GetInstance().FormatWrite(LOG::INFO, "add [ %s ]", id.first.c_str());
+    LOG::GetInstance().FormatWrite(LOG::DEBUG, "add [ %s ]", id.first.c_str());
     news.pop();
     ids.insert(id);
   }

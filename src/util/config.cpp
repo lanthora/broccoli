@@ -1,8 +1,12 @@
 
 #include "util/config.h"
 #include "util/log.h"
+#include <cstring>
+#include <errno.h>
 #include <iostream>
 #include <string>
+#include <sys/resource.h>
+#include <ulimit.h>
 
 namespace broccoli {
 
@@ -43,9 +47,20 @@ void Config::Init(int argc, char **argv) {
     }
   }
 
-
-
   // TODO:需要在这里添加参数校验，两个必填的参数如果没有就打印错误信息并退出进程
+}
+
+void Config::UpdateLimit() {
+  struct rlimit rlim;
+
+  getrlimit(RLIMIT_NOFILE, &rlim);
+  LOG::GetInstance().FormatWrite(LOG::INFO, "RLIMIT_NOFILE: %d %d", rlim.rlim_cur, rlim.rlim_max);
+  rlim.rlim_cur = std::max(1UL << 14, rlim.rlim_cur);
+  if (setrlimit(RLIMIT_NOFILE, &rlim)) {
+    LOG::GetInstance().FormatWrite(LOG::ERROR, "setrlimit error %s", std::strerror(errno));
+  }
+  getrlimit(RLIMIT_NOFILE, &rlim);
+  LOG::GetInstance().FormatWrite(LOG::INFO, "RLIMIT_NOFILE: %d %d", rlim.rlim_cur, rlim.rlim_max);
 }
 
 } // namespace broccoli

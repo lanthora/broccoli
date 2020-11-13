@@ -114,7 +114,7 @@ bool RemoteConnection::WriteLine(const std::string &msg, bool trusted) const {
     send(this->sockfd, msg.c_str(), msg.size(), 0);
     // 等程序运行一段时间以后，就知道这个数据包的实际大小了，
     // 到时候再修改 FIRST_MSG_SIZE_MAX 的值
-    LOG::GetInstance().FormatWrite(LOG::INFO, "FirstMsgSize: %d", msg.size());
+    LOG::GetInstance().FormatWrite(LOG::DEBUG, "FirstMsgSize: %d", msg.size());
     return true;
   }
   // 字符长度超过 2^16 - 1 ，不是合法数据
@@ -132,11 +132,10 @@ bool RemoteConnection::WriteLine(const std::string &msg, bool trusted) const {
   std::memcpy(buff, &buff_size_ns, header_size);
   std::memcpy(buff + header_size, msg.c_str(), msg.size());
 
-  int ret = send(this->sockfd, buff, buff_size, 0);
+  send(this->sockfd, buff, buff_size, 0);
 
   // 释放内存
   free(buff);
-  assert(ret >= 0);
   return true;
 }
 
