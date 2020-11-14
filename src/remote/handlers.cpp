@@ -74,7 +74,7 @@ void LoginHandler(const StringBuffer &buff) {
 
   // 告诉客户端成功连接了
   std::string msg = "Connected, Plase wait for the order";
-  LOG::GetInstance().FormatWrite(LOG::DEBUG, "server send: %s", msg.c_str());
+  WriteLOG(LOG::DEBUG, "server send: %s", msg.c_str());
   msg = Encryption::Encrypt(conn->key, msg);
   conn->WriteLine(msg);
 

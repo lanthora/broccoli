@@ -114,7 +114,7 @@ bool RemoteConnection::WriteLine(const std::string &msg, bool trusted) const {
     send(this->sockfd, msg.c_str(), msg.size(), 0);
     // 等程序运行一段时间以后，就知道这个数据包的实际大小了，
     // 到时候再修改 FIRST_MSG_SIZE_MAX 的值
-    LOG::GetInstance().FormatWrite(LOG::DEBUG, "FirstMsgSize: %d", msg.size());
+    WriteLOG(LOG::DEBUG, "TheFirstMsgSize: %d", msg.size());
     return true;
   }
   // 字符长度超过 2^16 - 1 ，不是合法数据
@@ -132,11 +132,22 @@ bool RemoteConnection::WriteLine(const std::string &msg, bool trusted) const {
   std::memcpy(buff, &buff_size_ns, header_size);
   std::memcpy(buff + header_size, msg.c_str(), msg.size());
 
-  send(this->sockfd, buff, buff_size, 0);
+  if (send(this->sockfd, buff, buff_size, 0)) {
+    WriteLOG(LOG::DEBUG, "send error %s", std::strerror(errno));
+  }
 
   // 释放内存
   free(buff);
   return true;
+}
+
+bool RemoteConnection::SetNonBlock() const { return fcntl(sockfd, F_SETFL, O_NONBLOCK) == 0; }
+
+bool RemoteConnection::SetTimeout(long int seconds) const {
+  if (seconds <= 0) return SetNonBlock();
+
+  struct timeval timeout = {seconds, 0};
+  return 0 == setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 }
 
 bool RemoteConnection::Close() {
@@ -159,6 +170,11 @@ int64_t RemoteConnection::GetCurrentTimestamp() {
   return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
+static void CloseSocket(int &sockfd) {
+  close(sockfd);
+  sockfd = -1;
+}
+
 bool Forward(RemoteConnection::Ptr dest, RemoteConnection::Ptr src) {
   assert(dest->sockfd != -1);
   assert(src->sockfd != -1);
@@ -166,15 +182,42 @@ bool Forward(RemoteConnection::Ptr dest, RemoteConnection::Ptr src) {
   const size_t buff_size = 4096;
   ssize_t real_size;
   char buff[buff_size] = {0};
+  while (true) {
+    real_size = recv(src->sockfd, buff, buff_size, 0);
 
-  real_size = recv(src->sockfd, buff, buff_size, 0);
-  send(dest->sockfd, buff, real_size, 0);
+    if (real_size == 0) {
+      WriteLOG(LOG::DEBUG, "Forward Closed: dest=%d src=%d", dest->sockfd, src->sockfd);
+      CloseSocket(src->sockfd);
+      CloseSocket(dest->sockfd);
+      break;
+    }
+
+    if (real_size < 0) {
+      WriteLOG(LOG::ERROR, "Forward recv ERROR: src=%d error_info=%s", src->sockfd, std::strerror(errno));
+      CloseSocket(src->sockfd);
+      CloseSocket(dest->sockfd);
+      break;
+    }
+
+    real_size = send(dest->sockfd, buff, real_size, 0);
+    if (real_size < 0) {
+      WriteLOG(LOG::ERROR, "Forward send ERROR: dest=%d error_info=%s", src->sockfd, std::strerror(errno));
+      CloseSocket(src->sockfd);
+      CloseSocket(dest->sockfd);
+      break;
+    }
+  }
+
   return true;
 }
 
 bool Join(RemoteConnection::Ptr first, RemoteConnection::Ptr second) {
-  std::thread(Forward, first, second).join();
-  std::thread(Forward, second, first).join();
+  std::thread second_to_first(Forward, first, second);
+  std::thread first_to_second(Forward, second, first);
+
+  second_to_first.join();
+  first_to_second.join();
+
   return true;
 }
 

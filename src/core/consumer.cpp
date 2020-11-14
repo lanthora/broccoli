@@ -13,7 +13,7 @@ void Consumer::operator()() {
   while (true) {
     item = BufferItemQueue::GetInstance().Get();
     if (item == NULL_MSG_ITEM) {
-      LOG::GetInstance().FormatWrite(LOG::NONE, "Consumer sleep interval = %d", interval);
+      WriteLOG(LOG::NONE, "Consumer sleep interval = %d", interval);
       Random::GetInstance().RandSleep(interval);
       interval = std::min(MAX_INTERVAL, interval * 2);
       continue;

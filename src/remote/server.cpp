@@ -14,9 +14,9 @@
 namespace broccoli {
 
 bool ConnectionManager::Init() {
-  LOG::GetInstance().Init(LOG::ALL, "/tmp/broccoli-server.log");
+  LOG::GetInstance().Init(LOG::INFO, "/tmp/broccoli-server.log");
   Config::UpdateLimit();
-  LOG::GetInstance().FormatWrite(LOG::INFO, "ConnectionManager::Init");
+  WriteLOG(LOG::INFO, "ConnectionManager::Init");
   const auto &address = Config::GetInstance().GetAddress();
   const auto &key = Config::GetInstance().GetKey();
   assert(!address.empty());
@@ -39,7 +39,7 @@ bool ConnectionManager::Init() {
 }
 
 bool ConnectionManager::Run() {
-  LOG::GetInstance().FormatWrite(LOG::INFO, "ConnectionManager::Run");
+  WriteLOG(LOG::INFO, "ConnectionManager::Run");
   std::vector<RemoteConnection::Ptr> connections;
 
   while (true) {
@@ -62,7 +62,7 @@ bool ConnectionManager::Run() {
 }
 
 bool ConnectionManager::Close() {
-  LOG::GetInstance().FormatWrite(LOG::DEBUG, "ConnectionManager::Close");
+  WriteLOG(LOG::DEBUG, "ConnectionManager::Close");
   return false;
 }
 
@@ -76,7 +76,7 @@ bool ConnectionManager::EpollAdd(const RemoteConnection::Ptr &connection, const 
 
   auto ret = epoll_ctl(epollfd, EPOLL_CTL_ADD, connection->sockfd, &ev);
   if (ret < 0) {
-    LOG::GetInstance().FormatWrite(LOG::DEBUG, "EpollAdd Error");
+    WriteLOG(LOG::DEBUG, "EpollAdd Error");
     return false;
   }
   return true;
@@ -118,7 +118,7 @@ bool ConnectionManager::IsNewConnection(const RemoteConnection::Ptr &conn) {
 }
 
 bool ConnectionManager::HandleNewConnection() {
-  LOG::GetInstance().FormatWrite(LOG::DEBUG, "HandleNewConnection");
+  WriteLOG(LOG::DEBUG, "HandleNewConnection");
   bool ok;
   RemoteConnection::Ptr new_client;
   ok = this->server->Accept(new_client);
@@ -144,7 +144,7 @@ bool ConnectionManager::HandleFirstMsg(const RemoteConnection::Ptr &conn) {
   auto prv_key = Config::GetInstance().GetKey();
 
   msg = Encryption::AuthDecrypt(prv_key, msg);
-  LOG::GetInstance().FormatWrite(LOG::DEBUG, "HandleFirstMsg  msg: %s", msg.c_str());
+  WriteLOG(LOG::DEBUG, "HandleFirstMsg  msg: %s", msg.c_str());
 
   switch (GetMsgType(msg, conn)) {
   case REMOTE_TYPE::LOGIN:
@@ -222,7 +222,7 @@ void ClientManager::DelOldIds() {
     olds.pop();
     auto it = ids.find(id);
     if (it == ids.end()) continue;
-    LOG::GetInstance().FormatWrite(LOG::DEBUG, "del [ %s ]", id.c_str());
+    WriteLOG(LOG::DEBUG, "del [ %s ]", id.c_str());
     ids.erase(it);
   }
   oldmutex.unlock();
@@ -232,7 +232,7 @@ void ClientManager::AddNewIds() {
   newmutex.lock();
   while (!news.empty()) {
     auto id = news.front();
-    LOG::GetInstance().FormatWrite(LOG::DEBUG, "add [ %s ]", id.first.c_str());
+    WriteLOG(LOG::DEBUG, "add [ %s ]", id.first.c_str());
     news.pop();
     ids.insert(id);
   }
@@ -240,12 +240,12 @@ void ClientManager::AddNewIds() {
 }
 
 bool ClientManager::Refresh() {
-  LOG::GetInstance().FormatWrite(LOG::INFO, "Start RefreshConnections");
+  WriteLOG(LOG::INFO, "Start RefreshConnections");
   while (true) {
 
     DelOldIds();
     AddNewIds();
-    LOG::GetInstance().FormatWrite(LOG::INFO, "Number of clients: %d", ids.size());
+    WriteLOG(LOG::INFO, "Number of clients: %d", ids.size());
 
     auto delay = static_cast<double>(RemoteConnection::TIMEOUT);
     delay /= std::max(static_cast<int>(ids.size()), 1);
@@ -257,7 +257,7 @@ bool ClientManager::Refresh() {
       continue;
     }
 
-    LOG::GetInstance().FormatWrite(LOG::DEBUG, "delay: %f", delay);
+    WriteLOG(LOG::DEBUG, "delay: %f", delay);
 
     for (auto &conn : ids) {
       Random::GetInstance().RandSleep(delay);

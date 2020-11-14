@@ -12,7 +12,7 @@
 
 namespace broccoli {
 
-void LogHandler(const StringBuffer &buff) { LOG::GetInstance().FormatWrite(LOG::DEBUG, "LogHandler: %s", buff.c_str()); }
+void LogHandler(const StringBuffer &buff) { WriteLOG(LOG::DEBUG, "LogHandler: %s", buff.c_str()); }
 
 void RandomFakeLogService() {
   while (true) {
@@ -24,7 +24,7 @@ void RandomFakeLogService() {
     item->buff = Random::GetInstance().RandPrintableString(32);
 
     BufferItemQueue::GetInstance().Put(item);
-    LOG::GetInstance().FormatWrite(LOG::DEBUG, "RandomFakeLogService: %s", item->buff.c_str());
+    WriteLOG(LOG::DEBUG, "RandomFakeLogService: %s", item->buff.c_str());
   }
 }
 

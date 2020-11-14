@@ -10,8 +10,8 @@
 namespace broccoli {
 
 bool RemoteClient::Init() {
-  LOG::GetInstance().Init(LOG::NONE, "/tmp/broccoli-client.log");
-
+  LOG::GetInstance().Init(LOG::INFO, "/tmp/broccoli-client.log");
+  WriteLOG(LOG::INFO, "RemoteClient::Init");
   const std::string &address = Config::GetInstance().GetAddress();
   // 用户输入的非对称加密公钥
   const std::string &key = Config::GetInstance().GetKey();
@@ -42,11 +42,11 @@ bool RemoteClient::Init() {
 }
 
 bool RemoteClient::Run() {
-  LOG::GetInstance().FormatWrite(LOG::INFO, "RemoteClient::Run");
+  WriteLOG(LOG::INFO, "RemoteClient::Run");
   // 握手包，使用非对称加密，发送对称加密密钥
   // 每个从客户端发送的包都要包含自己的身份信息
   std::string msg = GetRegisterInfo();
-  LOG::GetInstance().FormatWrite(LOG::DEBUG, "client send: %s", msg.c_str());
+  WriteLOG(LOG::DEBUG, "client send: %s", msg.c_str());
 
   // 注释中是一组有效的公私钥
   // MDYwEAYHKoZIzj0CAQYFK4EEABwDIgAEeDMpwTfhO5QrOxbrLYHo1CZOZjSnkUEwtJCaBE5zAcc=
@@ -59,28 +59,19 @@ bool RemoteClient::Run() {
   connection->ReadLine(msg);
   if (msg.empty()) return false;
   msg = Encryption::Decrypt(connection->key, msg);
-  LOG::GetInstance().FormatWrite(LOG::DEBUG, "client recv: %s", msg.c_str());
+  WriteLOG(LOG::DEBUG, "client recv: %s", msg.c_str());
 
-  // 设置超时时间为1分钟，等待在1分钟内服务器发来心跳包，
-  // 在这个 socket 接收到的 server 发来的包应该都是加密的
-  /*
-  while(true) {
-    1. 接受消息
-    2. 如果超时，跳出循环，跳出循环后客户端会重新初始化
-    3. 解密，解密失败跳出循环
-    4. 处理信息
-  }
-  */
+  connection->SetTimeout(60);
   while (true) {
     connection->ReadLine(msg);
     if (msg.empty()) return false;
     msg = Encryption::Decrypt(connection->key, msg);
     auto &id = Config::GetInstance().GetID();
-    LOG::GetInstance().FormatWrite(LOG::DEBUG, "client [ %s ] recv: %s", id.c_str(), msg.c_str());
+    WriteLOG(LOG::DEBUG, "client [ %s ] recv: %s", id.c_str(), msg.c_str());
     Random::GetInstance().RandSleep(1000);
 
     msg = "World";
-    LOG::GetInstance().FormatWrite(LOG::DEBUG, "client send: %s", msg.c_str());
+    WriteLOG(LOG::DEBUG, "client send: %s", msg.c_str());
     msg = Encryption::Encrypt(connection->key, msg);
 
     connection->WriteLine(msg);
@@ -90,7 +81,7 @@ bool RemoteClient::Run() {
 }
 
 bool RemoteClient::Close() {
-  LOG::GetInstance().FormatWrite(LOG::INFO, "RemoteClient::Close");
+  WriteLOG(LOG::INFO, "RemoteClient::Close");
   connection->Close();
   return true;
 }

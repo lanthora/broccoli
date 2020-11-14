@@ -34,6 +34,8 @@ public:
   ~LOG();
 };
 
+#define WriteLOG LOG::GetInstance().FormatWrite
+
 } // namespace broccoli
 
 #endif

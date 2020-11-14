@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <sys/fcntl.h>
+#include <sys/socket.h>
 #include <thread>
 
 namespace broccoli {
@@ -44,10 +45,8 @@ public:
   bool WriteLine(const std::string &msg, bool trusted = true) const;
 
   // 设置 socket 非阻塞
-  bool SetNonBlock() const {
-    fcntl(sockfd, F_SETFL, O_NONBLOCK);
-    return true;
-  }
+  bool SetNonBlock() const;
+  bool SetTimeout(long int seconds) const;
 
   // 判断这个连接是否超过超时时间没有发送新消息
   bool IsTimeout();
