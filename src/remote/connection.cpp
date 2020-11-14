@@ -31,9 +31,7 @@ bool RemoteConnection::Bind(const std::string &ip, const std::string &port) {
   addr.sin_port = htons(atoi(port.c_str()));
 
   socklen_t len = sizeof(struct sockaddr_in);
-  int ret = bind(this->sockfd, (struct sockaddr *)&addr, len);
-  assert(ret >= 0);
-  return true;
+  return 0 <= bind(this->sockfd, (struct sockaddr *)&addr, len);
 }
 
 bool RemoteConnection::Listen() {
@@ -162,7 +160,7 @@ bool RemoteConnection::Close() {
   return true;
 }
 
-bool RemoteConnection::IsTimeout() { return GetCurrentTimestamp() - last_connection_time > TIMEOUT; }
+bool RemoteConnection::IsTimeout() { return GetCurrentTimestamp() - last_connection_time > 2 * TIMEOUT; }
 
 bool RemoteConnection::TagLastConnection() {
   last_connection_time = GetCurrentTimestamp();
