@@ -1,4 +1,5 @@
 #include "util/random.h"
+#include "util/log.h"
 #include <chrono>
 #include <random>
 #include <thread>
@@ -27,7 +28,12 @@ std::string Random::RandPrintableString(size_t length) {
 
 void Random::RandSleep(unsigned int begin, unsigned int end) {
   if (begin < end) {
-    std::this_thread::sleep_for(std::chrono::milliseconds((rand() % (end - begin)) + begin));
+    std::random_device generator;
+    WriteLOG(LOG::DEBUG, "begin: %d  end: %d", begin, end);
+    std::uniform_int_distribution<int> distribution(begin, end);
+    int t = distribution(generator);
+    WriteLOG(LOG::DEBUG, "sleep time: %d", t);
+    std::this_thread::sleep_for(std::chrono::milliseconds(t));
   } else {
     std::this_thread::sleep_for(std::chrono::milliseconds(begin));
   }

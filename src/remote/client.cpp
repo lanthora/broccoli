@@ -27,9 +27,9 @@ bool RemoteClient::Init() {
   bool ok;
   connection = RemoteConnection::Make();
   ok = connection->Init();
-  assert(ok);
+  if (!ok) return false;
   ok = connection->Connect(ip, port);
-  assert(ok);
+  if (!ok) return false;
 
   // 客户端随机生成的要上传给服务器的对称加密密钥
   // 对应 RemoteConnection::key

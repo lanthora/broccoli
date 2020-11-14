@@ -15,7 +15,10 @@ bool RemoteConnection::Init(Ptr connection) {
   } else {
     this->sockfd = connection->sockfd;
   }
-  assert(this->sockfd >= 0);
+  if (this->sockfd < 0) {
+    WriteLOG(LOG::DEBUG, "init socket error %s", std::strerror(errno));
+    return false;
+  }
   return true;
 }
 
@@ -159,7 +162,7 @@ bool RemoteConnection::Close() {
   return true;
 }
 
-bool RemoteConnection::IsTimeout() { return GetCurrentTimestamp() - last_connection_time > 2 * TIMEOUT; }
+bool RemoteConnection::IsTimeout() { return GetCurrentTimestamp() - last_connection_time > TIMEOUT; }
 
 bool RemoteConnection::TagLastConnection() {
   last_connection_time = GetCurrentTimestamp();
