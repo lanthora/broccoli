@@ -27,11 +27,9 @@ bool RemoteClient::Init() {
   bool ok;
   connection = RemoteConnection::Make();
   ok = connection->Init();
-  if (!ok)
-    return false;
+  if (!ok) return false;
   ok = connection->Connect(ip, port);
-  if (!ok)
-    return false;
+  if (!ok) return false;
 
   // 客户端随机生成的要上传给服务器的对称加密密钥
   // 对应 RemoteConnection::key
@@ -59,16 +57,14 @@ bool RemoteClient::Run() {
 
   // 接收服务器返回的指令，正常情况下客户端进度等待状态
   connection->ReadLine(msg);
-  if (msg.empty())
-    return false;
+  if (msg.empty()) return false;
   msg = Encryption::Decrypt(connection->key, msg);
   WriteLOG(LOG::DEBUG, "client recv: %s", msg.c_str());
 
-  connection->SetTimeout(RemoteConnection::TIMEOUT);
+  connection->SetTimeout(RemoteConnection::NETWORK_DELAY + RemoteConnection::TIMEOUT);
   while (true) {
     connection->ReadLine(msg);
-    if (msg.empty())
-      return false;
+    if (msg.empty()) return false;
     msg = Encryption::Decrypt(connection->key, msg);
     auto &id = Config::GetInstance().GetID();
     WriteLOG(LOG::DEBUG, "client [ %s ] recv: %s", id.c_str(), msg.c_str());
@@ -97,8 +93,7 @@ std::string RemoteClient::GetRegisterInfo() {
   doc.AddMember("type", "login", allocator);
 
   rapidjson::Value value(rapidjson::kStringType);
-  value.SetString(Config::GetInstance().GetID().c_str(),
-                  Config::GetInstance().GetID().size());
+  value.SetString(Config::GetInstance().GetID().c_str(), Config::GetInstance().GetID().size());
   doc.AddMember("id", value, allocator);
   value.SetString(connection->key.c_str(), connection->key.size());
   doc.AddMember("key", value, allocator);

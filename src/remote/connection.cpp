@@ -160,7 +160,7 @@ bool RemoteConnection::Close() {
   return true;
 }
 
-bool RemoteConnection::IsTimeout() { return GetCurrentTimestamp() - last_connection_time > 2 * TIMEOUT; }
+bool RemoteConnection::IsTimeout() { return GetCurrentTimestamp() - last_connection_time > NETWORK_DELAY + TIMEOUT; }
 
 bool RemoteConnection::TagLastConnection() {
   last_connection_time = GetCurrentTimestamp();
