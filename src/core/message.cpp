@@ -22,7 +22,7 @@ BufferItem::Ptr BufferItemQueue::Get() {
   return tmp_item;
 }
 
-void BufferItem::GenerateAndSend(const std::string &type, unsigned int priority, const StringBuffer &buff) {
+void BufferItem::GenerateAndSendToQueue(const std::string &type, unsigned int priority, const StringBuffer &buff) {
   auto p = Make();
   p->type = type;
   p->priority = priority;

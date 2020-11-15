@@ -22,7 +22,7 @@ struct BufferItem {
   StringBuffer buff;
 
   // 生成一个对象并放入生产者队列
-  static void GenerateAndSend(const std::string &type, unsigned int priority, const StringBuffer &buff);
+  static void GenerateAndSendToQueue(const std::string &type, unsigned int priority, const StringBuffer &buff);
 };
 
 extern BufferItem::Ptr NULL_MSG_ITEM;

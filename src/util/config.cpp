@@ -56,7 +56,7 @@ void Config::UpdateLimit() {
   WriteLOG(LOG::INFO, "RLIMIT_NOFILE: %d %d", rlim.rlim_cur, rlim.rlim_max);
   rlim.rlim_cur = std::max(1UL << 14, rlim.rlim_cur);
   if (setrlimit(RLIMIT_NOFILE, &rlim)) {
-    WriteLOG(LOG::ERROR, "setrlimit error %s", std::strerror(errno));
+    WriteLOG(LOG::ERROR, "setrlimit: %s", std::strerror(errno));
   }
   getrlimit(RLIMIT_NOFILE, &rlim);
   WriteLOG(LOG::INFO, "RLIMIT_NOFILE: %d %d", rlim.rlim_cur, rlim.rlim_max);

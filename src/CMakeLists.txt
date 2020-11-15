@@ -15,6 +15,7 @@ add_subdirectory(log)
 add_subdirectory(frp)
 add_subdirectory(locale)
 add_subdirectory(remote)
+add_subdirectory(third/http)
 
 add_executable(broccoli ${DIR_SRCS})
 
@@ -24,6 +25,7 @@ target_link_libraries(broccoli log)
 target_link_libraries(broccoli frp)
 target_link_libraries(broccoli locale)
 target_link_libraries(broccoli remote)
+target_link_libraries(broccoli httplib)
 
 target_link_libraries(broccoli cryptopp)
 target_link_libraries(broccoli pthread)

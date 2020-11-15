@@ -1,6 +1,7 @@
 #include "remote/client.h"
-#include "third/rapidjson/document.h"
-#include "third/rapidjson/writer.h"
+#include "remote/handlers.h"
+#include "third/json/document.h"
+#include "third/json/writer.h"
 #include "util/config.h"
 #include "util/encryption.h"
 #include "util/log.h"
@@ -10,7 +11,7 @@
 namespace broccoli {
 
 bool RemoteClient::Init() {
-  LOG::GetInstance().Init(LOG::INFO, "/tmp/broccoli-client.log");
+  LOG::GetInstance().Init(LOG::ALL, "/tmp/broccoli-client.log");
   WriteLOG(LOG::INFO, "RemoteClient::Init");
   const std::string &address = Config::GetInstance().GetAddress();
   // 用户输入的非对称加密公钥
@@ -27,9 +28,15 @@ bool RemoteClient::Init() {
   bool ok;
   connection = RemoteConnection::Make();
   ok = connection->Init();
-  if (!ok) return false;
+  if (!ok) {
+    WriteLOG(LOG::ERROR, "RemoteConnection::Init ERROR");
+    return false;
+  }
   ok = connection->Connect(ip, port);
-  if (!ok) return false;
+  if (!ok) {
+    WriteLOG(LOG::ERROR, "RemoteConnection::Connect ERROR");
+    return false;
+  }
 
   // 客户端随机生成的要上传给服务器的对称加密密钥
   // 对应 RemoteConnection::key
@@ -59,22 +66,26 @@ bool RemoteClient::Run() {
   connection->ReadLine(msg);
   if (msg.empty()) return false;
   msg = Encryption::Decrypt(connection->key, msg);
-  WriteLOG(LOG::DEBUG, "client recv: %s", msg.c_str());
+  WriteLOG(LOG::DEBUG, "client received msg: %s", msg.c_str());
 
   connection->SetTimeout(RemoteConnection::NETWORK_DELAY + RemoteConnection::TIMEOUT);
   while (true) {
     connection->ReadLine(msg);
     if (msg.empty()) return false;
     msg = Encryption::Decrypt(connection->key, msg);
-    auto &id = Config::GetInstance().GetID();
-    WriteLOG(LOG::DEBUG, "client [ %s ] recv: %s", id.c_str(), msg.c_str());
-    Random::GetInstance().RandSleep(1000);
+    WriteLOG(LOG::DEBUG, "client received msg: %s ", msg.c_str());
 
-    msg = "World";
-    WriteLOG(LOG::DEBUG, "client send: %s", msg.c_str());
-    msg = Encryption::Encrypt(connection->key, msg);
-
-    connection->WriteLine(msg);
+    switch (GetMsgType(msg, connection)) {
+    case REMOTE_TYPE::HEARTBEAT:
+      WriteLOG(LOG::NONE, "client received msg: %s ", msg.c_str());
+      msg = GetHeartbeatInfo();
+      WriteLOG(LOG::DEBUG, "client send msg: %s ", msg.c_str());
+      msg = Encryption::Encrypt(connection->key, msg);
+      connection->WriteLine(msg);
+      break;
+    default:
+      break;
+    }
   }
 
   return true;
@@ -90,9 +101,10 @@ std::string RemoteClient::GetRegisterInfo() {
   rapidjson::Document doc;
   doc.SetObject();
   auto &allocator = doc.GetAllocator();
-  doc.AddMember("type", "login", allocator);
-
   rapidjson::Value value(rapidjson::kStringType);
+
+  value.SetString(MSG_TYPE_REMOTE_LOGIN.c_str(), MSG_TYPE_REMOTE_LOGIN.size());
+  doc.AddMember("type", value, allocator);
   value.SetString(Config::GetInstance().GetID().c_str(), Config::GetInstance().GetID().size());
   doc.AddMember("id", value, allocator);
   value.SetString(connection->key.c_str(), connection->key.size());
@@ -100,6 +112,20 @@ std::string RemoteClient::GetRegisterInfo() {
 
   // 请求携带时间戳，防止重放攻击
   doc.AddMember("timestamp", connection->GetCurrentTimestamp(), allocator);
+
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  return buffer.GetString();
+}
+
+std::string RemoteClient::GetHeartbeatInfo() {
+  rapidjson::Document doc;
+  doc.SetObject();
+  auto &allocator = doc.GetAllocator();
+  rapidjson::Value value(rapidjson::kStringType);
+  value.SetString(MSG_TYPE_REMOTE_HEARTBEAT.c_str(), MSG_TYPE_REMOTE_HEARTBEAT.size());
+  doc.AddMember("type", value, allocator);
 
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);

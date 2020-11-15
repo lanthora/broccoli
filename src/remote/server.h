@@ -2,7 +2,7 @@
 #define REMOTE_SERVER_H
 
 #include "remote/connection.h"
-#include "third/rapidjson/document.h"
+#include "third/json/document.h"
 #include <map>
 #include <memory>
 #include <mutex>
@@ -32,11 +32,11 @@ public:
 
 private:
   bool IsNewConnection(const RemoteConnection::Ptr &conn);
-  bool IsFirstMsg(const RemoteConnection::Ptr &conn);
+  bool IsTheFirstMsg(const RemoteConnection::Ptr &conn);
 
   bool HandleNewConnection();
-  bool HandleFirstMsg(const RemoteConnection::Ptr &conn);
-  bool HandleClientConnection(const RemoteConnection::Ptr &conn);
+  bool HandleTheFirstMsg(const RemoteConnection::Ptr &conn);
+  bool HandleClientMsg(const RemoteConnection::Ptr &conn);
 
   int epollfd = -1;
   RemoteConnection::Ptr server;
@@ -72,6 +72,7 @@ private:
   std::mutex newmutex;
   std::queue<std::pair<std::string, RemoteConnection::Ptr>> news;
 
+  std::string GetHeartbeatInfo();
   ClientManager() {}
 };
 

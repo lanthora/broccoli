@@ -85,7 +85,8 @@
     "codecvt": "cpp",
     "netfwd": "cpp",
     "regex": "cpp",
-    "shared_mutex": "cpp"
+    "shared_mutex": "cpp",
+    "csignal": "cpp"
   },
   "typescript.workspaceSymbols.scope": "currentProject",
   "C_Cpp.default.cppStandard": "c++20",

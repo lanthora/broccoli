@@ -31,7 +31,7 @@ bool RemoteConnection::Bind(const std::string &ip, const std::string &port) {
   addr.sin_port = htons(atoi(port.c_str()));
 
   socklen_t len = sizeof(struct sockaddr_in);
-  return 0 <= bind(this->sockfd, (struct sockaddr *)&addr, len);
+  return bind(this->sockfd, (struct sockaddr *)&addr, len) >= 0;
 }
 
 bool RemoteConnection::Listen() {
@@ -115,7 +115,7 @@ bool RemoteConnection::WriteLine(const std::string &msg, bool trusted) const {
     send(this->sockfd, msg.c_str(), msg.size(), 0);
     // 等程序运行一段时间以后，就知道这个数据包的实际大小了，
     // 到时候再修改 FIRST_MSG_SIZE_MAX 的值
-    WriteLOG(LOG::DEBUG, "TheFirstMsgSize: %d", msg.size());
+    WriteLOG(LOG::DEBUG, "the first msg size: %d", msg.size());
     return true;
   }
   // 字符长度超过 2^16 - 1 ，不是合法数据
@@ -133,7 +133,7 @@ bool RemoteConnection::WriteLine(const std::string &msg, bool trusted) const {
   std::memcpy(buff, &buff_size_ns, header_size);
   std::memcpy(buff + header_size, msg.c_str(), msg.size());
 
-  if (send(this->sockfd, buff, buff_size, 0)) {
+  if (send(this->sockfd, buff, buff_size, 0) == -1) {
     WriteLOG(LOG::DEBUG, "send error %s", std::strerror(errno));
   }
 
@@ -187,14 +187,14 @@ bool Forward(RemoteConnection::Ptr dest, RemoteConnection::Ptr src) {
     real_size = recv(src->sockfd, buff, buff_size, 0);
 
     if (real_size == 0) {
-      WriteLOG(LOG::DEBUG, "Forward Closed: dest=%d src=%d", dest->sockfd, src->sockfd);
+      WriteLOG(LOG::DEBUG, "forward closed: dest=%d src=%d", dest->sockfd, src->sockfd);
       CloseSocket(src->sockfd);
       CloseSocket(dest->sockfd);
       break;
     }
 
     if (real_size < 0) {
-      WriteLOG(LOG::ERROR, "Forward recv ERROR: src=%d error_info=%s", src->sockfd, std::strerror(errno));
+      WriteLOG(LOG::ERROR, "forward recv: src=%d error_info=%s", src->sockfd, std::strerror(errno));
       CloseSocket(src->sockfd);
       CloseSocket(dest->sockfd);
       break;
@@ -202,7 +202,7 @@ bool Forward(RemoteConnection::Ptr dest, RemoteConnection::Ptr src) {
 
     real_size = send(dest->sockfd, buff, real_size, 0);
     if (real_size < 0) {
-      WriteLOG(LOG::ERROR, "Forward send ERROR: dest=%d error_info=%s", src->sockfd, std::strerror(errno));
+      WriteLOG(LOG::ERROR, "forward send: dest=%d error_info=%s", src->sockfd, std::strerror(errno));
       CloseSocket(src->sockfd);
       CloseSocket(dest->sockfd);
       break;

@@ -1,9 +1,9 @@
 #include "remote/server.h"
 #include "log/log.h"
 #include "remote/handlers.h"
-#include "third/rapidjson/document.h"
-#include "third/rapidjson/error/en.h"
-#include "third/rapidjson/writer.h"
+#include "third/json/document.h"
+#include "third/json/error/en.h"
+#include "third/json/writer.h"
 #include "util/config.h"
 #include "util/encryption.h"
 #include "util/log.h"
@@ -14,9 +14,9 @@
 namespace broccoli {
 
 bool ConnectionManager::Init() {
-  LOG::GetInstance().Init(LOG::INFO, "/tmp/broccoli-server.log");
-  Config::UpdateLimit();
+  LOG::GetInstance().Init(LOG::ALL, "/tmp/broccoli-server.log");
   WriteLOG(LOG::INFO, "ConnectionManager::Init");
+  Config::UpdateLimit();
   const auto &address = Config::GetInstance().GetAddress();
   const auto &key = Config::GetInstance().GetKey();
   assert(!address.empty());
@@ -29,11 +29,24 @@ bool ConnectionManager::Init() {
   this->epollfd = epoll_create(1);
   assert(this->epollfd >= 0);
 
+  bool ok;
   this->server = RemoteConnection::Make();
-  this->server->Init();
-  this->server->Bind(ip, port);
-  this->server->Listen();
-  this->EpollAdd(this->server);
+  ok = this->server->Init();
+  if (!ok) {
+    WriteLOG(LOG::ERROR, "RemoteConnection::Init");
+    return false;
+  }
+  ok = this->server->Bind(ip, port);
+  if (!ok) {
+    WriteLOG(LOG::ERROR, "RemoteConnection::Bind");
+    return false;
+  }
+  ok = this->server->Listen();
+  if (!ok) {
+    WriteLOG(LOG::ERROR, "RemoteConnection::Listen");
+    return false;
+  }
+  ok = this->EpollAdd(this->server);
 
   return true;
 }
@@ -51,11 +64,11 @@ bool ConnectionManager::Run() {
         HandleNewConnection();
         continue;
       }
-      if (IsFirstMsg(conn)) {
-        HandleFirstMsg(conn);
+      if (IsTheFirstMsg(conn)) {
+        HandleTheFirstMsg(conn);
         continue;
       }
-      HandleClientConnection(conn);
+      HandleClientMsg(conn);
     }
   }
   return true;
@@ -76,7 +89,7 @@ bool ConnectionManager::EpollAdd(const RemoteConnection::Ptr &connection, const 
 
   auto ret = epoll_ctl(epollfd, EPOLL_CTL_ADD, connection->sockfd, &ev);
   if (ret < 0) {
-    WriteLOG(LOG::DEBUG, "EpollAdd Error");
+    WriteLOG(LOG::ERROR, "epoll_ctl EPOLL_CTL_ADD: %s", std::strerror(errno));
     return false;
   }
   return true;
@@ -99,7 +112,7 @@ bool ConnectionManager::EpollWait(std::vector<RemoteConnection::Ptr> &connection
 
   // 异常
   if (nfds < 0) {
-    std::cerr << "ConnectionManager::WaitConnection epoll_wait Error" << std::endl;
+    WriteLOG(LOG::ERROR, "epoll_wait: %s", std::strerror(errno));
     return false;
   }
 
@@ -118,7 +131,7 @@ bool ConnectionManager::IsNewConnection(const RemoteConnection::Ptr &conn) {
 }
 
 bool ConnectionManager::HandleNewConnection() {
-  WriteLOG(LOG::DEBUG, "HandleNewConnection");
+  WriteLOG(LOG::DEBUG, "ConnectionManager::HandleNewConnection");
   bool ok;
   RemoteConnection::Ptr new_client;
   ok = this->server->Accept(new_client);
@@ -129,12 +142,12 @@ bool ConnectionManager::HandleNewConnection() {
   return true;
 }
 
-bool ConnectionManager::IsFirstMsg(const RemoteConnection::Ptr &conn) {
+bool ConnectionManager::IsTheFirstMsg(const RemoteConnection::Ptr &conn) {
   auto is_first_msg = news.find(conn->sockfd) != news.end();
   return is_first_msg;
 }
 
-bool ConnectionManager::HandleFirstMsg(const RemoteConnection::Ptr &conn) {
+bool ConnectionManager::HandleTheFirstMsg(const RemoteConnection::Ptr &conn) {
   news.erase(conn->sockfd);
   std::string msg;
   conn->ReadLine(msg, false);
@@ -144,20 +157,20 @@ bool ConnectionManager::HandleFirstMsg(const RemoteConnection::Ptr &conn) {
   auto prv_key = Config::GetInstance().GetKey();
 
   msg = Encryption::AuthDecrypt(prv_key, msg);
-  WriteLOG(LOG::DEBUG, "HandleFirstMsg  msg: %s", msg.c_str());
+  WriteLOG(LOG::DEBUG, "hadle the first msg: %s", msg.c_str());
 
   switch (GetMsgType(msg, conn)) {
   case REMOTE_TYPE::LOGIN:
-    BufferItem::GenerateAndSend(MSG_TYPE_LOGIN, 100, msg);
+    BufferItem::GenerateAndSendToQueue(MSG_TYPE_REMOTE_LOGIN, 100, msg);
     break;
   default:
-    BufferItem::GenerateAndSend(MSG_TYPE_LOG, 0, msg);
+    BufferItem::GenerateAndSendToQueue(MSG_TYPE_LOG, 0, msg);
     break;
   }
   return true;
 }
 
-bool ConnectionManager::HandleClientConnection(const RemoteConnection::Ptr &conn) {
+bool ConnectionManager::HandleClientMsg(const RemoteConnection::Ptr &conn) {
   std::string msg;
   conn->ReadLine(msg);
 
@@ -170,10 +183,14 @@ bool ConnectionManager::HandleClientConnection(const RemoteConnection::Ptr &conn
 
   conn->TagLastConnection();
 
-  // 其他处理逻辑
-  // do something
-
-  return false;
+  switch (GetMsgType(msg, conn)) {
+  case REMOTE_TYPE::HEARTBEAT:
+    BufferItem::GenerateAndSendToQueue(MSG_TYPE_REMOTE_HEARTBEAT, 0, msg);
+    return true;
+  default:
+    BufferItem::GenerateAndSendToQueue(MSG_TYPE_REMOTE_DEFAULT, 0, msg);
+    return false;
+  }
 }
 
 RemoteConnection::Ptr ConnectionManager::Get(int fd) {
@@ -217,35 +234,39 @@ bool ClientManager::Del(const std::string &id) {
 
 void ClientManager::DelOldIds() {
   oldmutex.lock();
+  std::string del_ids;
   while (!olds.empty()) {
     auto id = olds.front();
     olds.pop();
     auto it = ids.find(id);
     if (it == ids.end()) continue;
-    WriteLOG(LOG::DEBUG, "del [ %s ]", id.c_str());
+    del_ids += (id + " ");
     ids.erase(it);
   }
+  if (!del_ids.empty()) WriteLOG(LOG::DEBUG, "del [ %s ]", del_ids.c_str());
   oldmutex.unlock();
 }
 
 void ClientManager::AddNewIds() {
   newmutex.lock();
+  std::string new_ids;
   while (!news.empty()) {
     auto id = news.front();
-    WriteLOG(LOG::DEBUG, "add [ %s ]", id.first.c_str());
+    new_ids += (id.first + " ");
     news.pop();
     ids.insert(id);
   }
+  if (!new_ids.empty()) WriteLOG(LOG::DEBUG, "new [ %s ]", new_ids.c_str());
   newmutex.unlock();
 }
 
 bool ClientManager::Refresh() {
-  WriteLOG(LOG::INFO, "Start RefreshConnections");
+  WriteLOG(LOG::INFO, "ClientManager::Refresh");
   while (true) {
 
     DelOldIds();
     AddNewIds();
-    WriteLOG(LOG::INFO, "Number of clients: %d", ids.size());
+    WriteLOG(LOG::INFO, "number of clients: %d", ids.size());
 
     auto delay = static_cast<double>(RemoteConnection::TIMEOUT);
     delay /= std::max(static_cast<int>(ids.size()), 1);
@@ -268,11 +289,25 @@ bool ClientManager::Refresh() {
         continue;
       }
 
-      std::string msg = "Hello";
+      std::string msg = GetHeartbeatInfo();
       msg = Encryption::Encrypt(conn.second->key, msg);
       conn.second->WriteLine(msg);
     }
   }
+}
+
+std::string ClientManager::GetHeartbeatInfo() {
+  rapidjson::Document doc;
+  doc.SetObject();
+  auto &allocator = doc.GetAllocator();
+  rapidjson::Value value(rapidjson::kStringType);
+  value.SetString(MSG_TYPE_REMOTE_HEARTBEAT.c_str(), MSG_TYPE_REMOTE_HEARTBEAT.size());
+  doc.AddMember("type", value, allocator);
+
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  return buffer.GetString();
 }
 
 ClientManager &ClientManager::GetInstance() {

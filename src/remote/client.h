@@ -19,6 +19,7 @@ private:
   RemoteConnection::Ptr connection;
 
   std::string GetRegisterInfo();
+  std::string GetHeartbeatInfo();
   RemoteClient() {}
 };
 

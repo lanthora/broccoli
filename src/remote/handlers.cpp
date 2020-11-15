@@ -1,7 +1,7 @@
 #include "remote/handlers.h"
 #include "remote/server.h"
-#include "third/rapidjson/document.h"
-#include "third/rapidjson/writer.h"
+#include "third/json/document.h"
+#include "third/json/writer.h"
 #include "util/encryption.h"
 #include "util/log.h"
 
@@ -12,7 +12,11 @@ REMOTE_TYPE GetMsgType(StringBuffer &msg, const RemoteConnection::Ptr &conn) {
   d.Parse(msg.c_str());
   if (d.HasParseError() || !d.HasMember("type") || !d["type"].IsString()) return REMOTE_TYPE::INVALID;
 
-  if (d["type"].GetString() == MSG_TYPE_LOGIN) {
+  if (d["type"].GetString() == MSG_TYPE_REMOTE_HEARTBEAT) {
+    return REMOTE_TYPE::HEARTBEAT;
+  }
+
+  if (d["type"].GetString() == MSG_TYPE_REMOTE_LOGIN) {
     d.AddMember("sockfd", conn->sockfd, d.GetAllocator());
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -34,7 +38,7 @@ bool IsValidLoginMsg(const rapidjson::Document &d) {
   return true;
 }
 
-void LoginHandler(const StringBuffer &buff) {
+void RemoteLoginHandler(const StringBuffer &buff) {
   rapidjson::Document d;
   d.Parse(buff.c_str());
 
@@ -73,7 +77,7 @@ void LoginHandler(const StringBuffer &buff) {
   conn->TagLastConnection();
 
   // 告诉客户端成功连接了
-  std::string msg = "Connected, Plase wait for the order";
+  std::string msg = "connected";
   WriteLOG(LOG::DEBUG, "server send: %s", msg.c_str());
   msg = Encryption::Encrypt(conn->key, msg);
   conn->WriteLine(msg);
@@ -84,5 +88,7 @@ void LoginHandler(const StringBuffer &buff) {
   // 一定要设置完 conn->key 再添加，不然发送心跳的进程取不出值
   ClientManager::GetInstance().Add(id, conn);
 }
+
+void RemoteHeartbetHandler(const StringBuffer &buff) { WriteLOG(LOG::INFO, "RemoteHeartbetHandler: %s", buff.c_str()); }
 
 } // namespace broccoli

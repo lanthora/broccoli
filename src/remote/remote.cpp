@@ -17,7 +17,7 @@ namespace broccoli {
 void ConnectionManagerService() {
   bool ok;
   while (true) {
-    Random::GetInstance().RandSleep(0, 1000);
+    Random::GetInstance().RandSleep(5000);
     ok = ConnectionManager::GetInstance().Init();
     if (!ok) continue;
     ConnectionManager::GetInstance().Run();
@@ -43,17 +43,17 @@ void StartServer() {
   Producer::GetInstance().AddService(ClientManagerService);
   Producer::GetInstance().AddService(ConnectionManagerService);
   Producer::GetInstance().AddService(UnixDomainSocketService);
-  std::thread tp(Producer::GetInstance());
+  std::thread producer_thread(Producer::GetInstance());
 
   // 消费者线程
-  Consumer::GetInstance().AddHandler(MSG_TYPE_LOGIN, LoginHandler);
-  Consumer::GetInstance().AddHandler(MSG_TYPE_LOG, LogHandler);
+  Consumer::GetInstance().AddHandler(MSG_TYPE_REMOTE_LOGIN, RemoteLoginHandler);
+  Consumer::GetInstance().AddHandler(MSG_TYPE_REMOTE_HEARTBEAT, RemoteHeartbetHandler);
   Consumer::GetInstance().AddHandler(FRP, FrpHandler);
-  std::thread tc(Consumer::GetInstance());
+  std::thread consumer_thread(Consumer::GetInstance());
 
   // 主线程等待生产者消费者退出
-  tp.join();
-  tc.join();
+  producer_thread.join();
+  consumer_thread.join();
 }
 
 void StartClient() {
@@ -61,16 +61,16 @@ void StartClient() {
   // 生产者线程
   Producer::GetInstance().AddService(ClientService);
   Producer::GetInstance().AddService(UnixDomainSocketService);
-  std::thread tp(Producer::GetInstance());
+  std::thread producer_thread(Producer::GetInstance());
 
   // 消费者线程
   Consumer::GetInstance().AddHandler(MSG_TYPE_LOG, LogHandler);
   Consumer::GetInstance().AddHandler(FRP, FrpHandler);
-  std::thread tc(Consumer::GetInstance());
+  std::thread consumer_thread(Consumer::GetInstance());
 
   // 主线程等待生产者消费者退出
-  tp.join();
-  tc.join();
+  producer_thread.join();
+  consumer_thread.join();
 }
 
 } // namespace broccoli

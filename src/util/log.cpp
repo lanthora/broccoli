@@ -25,8 +25,8 @@ void LOG::Write(const LOG::LEVEL &level, const std::string &log) {
 
   std::ofstream logfile;
   logfile.open(this->filename, std::ios::app);
-  logfile << "[" << LevelToString(level) << "]";
-  logfile << "[" << CurrentTime() << "]:";
+  logfile << "[ " << LevelToString(level) << " ]";
+  logfile << "[ " << CurrentTime() << " ]  ";
   logfile << log << std::endl;
   logfile.close();
 }
@@ -46,15 +46,15 @@ std::string LOG::LevelToString(const LOG::LEVEL &level) {
   case DEBUG:
     return "DEBUG";
   case INFO:
-    return "INFO";
+    return "INFO ";
   case ERROR:
     return "ERROR";
   case NONE:
-    return "NONE";
+    return "NONE ";
   case ALL:
-    return "ALL";
+    return "ALL  ";
   }
-  return "NONE";
+  return "NONE ";
 }
 
 std::string LOG::CurrentTime() {
