@@ -62,4 +62,36 @@ void Config::UpdateLimit() {
   WriteLOG(LOG::INFO, "RLIMIT_NOFILE: %d %d", rlim.rlim_cur, rlim.rlim_max);
 }
 
+const std::string &Config::GetAddress() {
+  if (this->address.empty()) {
+    this->address = "127.0.0.1:5050";
+  }
+  return this->address;
+}
+
+const std::string &Config::GetKey() {
+  if (this->key.empty()) {
+    std::string pub = "MDYwEAYHKoZIzj0CAQYFK4EEABwDIgAEeDMpwTfhO5QrOxbrLYHo1CZOZjSnkUEwtJCaBE5zAce=";
+    std::string pri = "MC4CAQAwEAYHKoZIzj0CAQYFK4EEABwEFzAVAgEBBBBOL8immOPCraXn7LM1q/oG";
+    switch (GetRunType()) {
+    case RUN_TYPE::CLIENT:
+      this->key = pub;
+      break;
+    case RUN_TYPE::SERVER:
+      this->key = pri;
+      break;
+    default:
+      this->key = pub;
+      break;
+    }
+  }
+  return this->key;
+}
+const std::string &Config::GetID() {
+  if (this->id.empty()) {
+    this->id = Random::GetID(20);
+  }
+  return this->id;
+}
+
 } // namespace broccoli

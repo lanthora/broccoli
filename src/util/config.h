@@ -1,6 +1,7 @@
 #ifndef UTIL_CONFIG_H
 #define UTIL_CONFIG_H
 
+#include "util/random.h"
 #include <assert.h>
 #include <string>
 
@@ -12,9 +13,9 @@ public:
   enum class RUN_TYPE { INVALID, SERVER, CLIENT };
   void Init(int argc, char **argv);
   const RUN_TYPE &GetRunType() { return this->current_type; }
-  const std::string &GetAddress() { return this->address; }
-  const std::string &GetKey() { return this->key; }
-  const std::string &GetID() { return this->id; }
+  const std::string &GetAddress();
+  const std::string &GetKey();
+  const std::string &GetID();
   static void UpdateLimit();
 
 private:

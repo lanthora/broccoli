@@ -89,6 +89,8 @@ void RemoteLoginHandler(const StringBuffer &buff) {
   ClientManager::GetInstance().Add(id, conn);
 }
 
-void RemoteHeartbetHandler(const StringBuffer &buff) { WriteLOG(LOG::INFO, "RemoteHeartbetHandler: %s", buff.c_str()); }
+void RemoteHeartbetHandler(const StringBuffer &buff) {
+  WriteLOG(LOG::DEBUG, "RemoteHeartbetHandler: %s", buff.c_str());
+}
 
 } // namespace broccoli

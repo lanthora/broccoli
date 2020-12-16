@@ -14,7 +14,7 @@
 namespace broccoli {
 
 bool ConnectionManager::Init() {
-  LOG::GetInstance().Init(LOG::ALL, "/tmp/broccoli-server.log");
+  LOG::GetInstance().Init(LOG::INFO, "/tmp/broccoli-server.log");
   WriteLOG(LOG::INFO, "ConnectionManager::Init");
   Config::UpdateLimit();
   const auto &address = Config::GetInstance().GetAddress();
@@ -243,7 +243,7 @@ void ClientManager::DelOldIds() {
     del_ids += (id + " ");
     ids.erase(it);
   }
-  if (!del_ids.empty()) WriteLOG(LOG::DEBUG, "del [ %s ]", del_ids.c_str());
+  if (!del_ids.empty()) WriteLOG(LOG::INFO, "del [ %s ]", del_ids.c_str());
   oldmutex.unlock();
 }
 
@@ -256,7 +256,7 @@ void ClientManager::AddNewIds() {
     news.pop();
     ids.insert(id);
   }
-  if (!new_ids.empty()) WriteLOG(LOG::DEBUG, "new [ %s ]", new_ids.c_str());
+  if (!new_ids.empty()) WriteLOG(LOG::INFO, "new [ %s ]", new_ids.c_str());
   newmutex.unlock();
 }
 
@@ -274,14 +274,14 @@ bool ClientManager::Refresh() {
     delay *= 1000;
 
     if (ids.empty()) {
-      Random::GetInstance().RandSleep(delay);
+      Random::RandSleep(delay);
       continue;
     }
 
     WriteLOG(LOG::DEBUG, "delay: %f", delay);
 
     for (auto &conn : ids) {
-      Random::GetInstance().RandSleep(delay);
+      Random::RandSleep(delay);
       if (conn.second->sockfd == -1 || conn.second->IsTimeout()) {
         conn.second->Close();
         ClientManager::GetInstance().Del(conn.first);

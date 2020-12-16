@@ -16,12 +16,12 @@ void LogHandler(const StringBuffer &buff) { WriteLOG(LOG::DEBUG, "LogHandler: %s
 
 void RandomFakeLogService() {
   while (true) {
-    Random::GetInstance().RandSleep(100);
+    Random::RandSleep(100);
 
     BufferItem::Ptr item = BufferItem::Make();
     item->type = MSG_TYPE_LOG;
     item->priority = 0;
-    item->buff = Random::GetInstance().RandPrintableString(32);
+    item->buff = Random::GetPrintableString(32);
 
     BufferItemQueue::GetInstance().Put(item);
     WriteLOG(LOG::DEBUG, "RandomFakeLogService: %s", item->buff.c_str());

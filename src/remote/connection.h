@@ -15,7 +15,7 @@ public:
   // 定义握手包可能的最大长度，超出这个长度的握手包直接视为无效，丢弃
   static const int64_t TIMEOUT = 60;
   // 防止在线状态震荡，如果网络无延迟，理论上不需要这个值
-  static const int64_t NETWORK_DELAY = 5;
+  static const int64_t NETWORK_DELAY = 10;
   static const ssize_t FIRST_MSG_SIZE_MAX = 512;
   typedef std::shared_ptr<RemoteConnection> Ptr;
   static Ptr Make() { return std::make_shared<RemoteConnection>(); }

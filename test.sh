@@ -1,8 +1,23 @@
 #!/bin/bash  
-  
-for((i=1;i<=$1;i++));  
+
+if (($#<1));
+then
+    n=1
+else
+    n=$1
+fi
+
+echo "Close"
+pkill -f broccoli-
+
+echo "Start Server"
+./broccoli-server &
+
+echo "Start Client"
+
+for((i=1;i<=$n;i++));
 do
-    ./broccoli-client --address 127.0.0.1:5050 --key MDYwEAYHKoZIzj0CAQYFK4EEABwDIgAEeDMpwTfhO5QrOxbrLYHo1CZOZjSnkUEwtJCaBE5zAce= --id $i &
+    ./broccoli-client &
     sleep 0.01
 done 
 

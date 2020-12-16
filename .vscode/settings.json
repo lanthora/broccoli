@@ -86,7 +86,9 @@
     "netfwd": "cpp",
     "regex": "cpp",
     "shared_mutex": "cpp",
-    "csignal": "cpp"
+    "csignal": "cpp",
+    "hash_set": "cpp",
+    "slist": "cpp"
   },
   "typescript.workspaceSymbols.scope": "currentProject",
   "C_Cpp.default.cppStandard": "c++20",

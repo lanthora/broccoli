@@ -23,12 +23,10 @@ void Encryption::GenerateAuthKeys(std::string &prv_key, std::string &pub_key) {
 
   privateKey.MakePublicKey(publicKey);
 
-  CryptoPP::ECIES<CryptoPP::ECP>::Encryptor encryptor(publicKey);
   CryptoPP::Base64Encoder pub_encoder(new CryptoPP::StringSink(pub_key), false);
   publicKey.DEREncode(pub_encoder);
   pub_encoder.MessageEnd();
 
-  CryptoPP::ECIES<CryptoPP::ECP>::Decryptor decryptor(privateKey);
   CryptoPP::Base64Encoder prv_encoder(new CryptoPP::StringSink(prv_key), false);
   privateKey.DEREncode(prv_encoder);
   prv_encoder.MessageEnd();

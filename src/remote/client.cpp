@@ -11,7 +11,7 @@
 namespace broccoli {
 
 bool RemoteClient::Init() {
-  LOG::GetInstance().Init(LOG::ALL, "/tmp/broccoli-client.log");
+  LOG::GetInstance().Init(LOG::NONE, "/tmp/broccoli-client.log");
   WriteLOG(LOG::INFO, "RemoteClient::Init");
   const std::string &address = Config::GetInstance().GetAddress();
   // 用户输入的非对称加密公钥

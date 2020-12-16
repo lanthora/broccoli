@@ -3,7 +3,9 @@
 一个可以完成简单生产消费问题的小工具
 
 
-# FAQ
+# 密钥对
 
-Q: 出现打开文件错误，并且错误号为24  
-A: 操作系统对用户可以打开的文件个数做了限制，默认为1024，每个socket占用一个文件描述符，当连接用户接近这个值的时候，打开文件就可能产生错误，需要调整 ulimit -n 的值
+默认使用的密钥对
+
+私钥：MC4CAQAwEAYHKoZIzj0CAQYFK4EEABwEFzAVAgEBBBBOL8immOPCraXn7LM1q/oG
+公钥：MDYwEAYHKoZIzj0CAQYFK4EEABwDIgAEeDMpwTfhO5QrOxbrLYHo1CZOZjSnkUEwtJCaBE5zAcc=

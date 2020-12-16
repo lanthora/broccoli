@@ -17,7 +17,7 @@ namespace broccoli {
 void ConnectionManagerService() {
   bool ok;
   while (true) {
-    Random::GetInstance().RandSleep(5000);
+    Random::RandSleep(5000);
     ok = ConnectionManager::GetInstance().Init();
     if (!ok) continue;
     ConnectionManager::GetInstance().Run();
@@ -28,7 +28,7 @@ void ConnectionManagerService() {
 void ClientService() {
   bool ok;
   while (true) {
-    Random::GetInstance().RandSleep(0, 60 * 1000);
+    Random::RandSleep(0, 60 * 1000);
     ok = RemoteClient::GetInstance().Init();
     if (!ok) continue;
     ok = RemoteClient::GetInstance().Run();
